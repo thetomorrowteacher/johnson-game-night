@@ -347,7 +347,7 @@ function hostFinish(outcome){
 function joinCard(){
   const url=SITE+"?pin="+H.code;
   const qr=el("div",{class:"qr",role:"img","aria-label":"QR code to join room "+H.code});
-  setTimeout(()=>{try{if(window.QRCode)new QRCode(qr,{text:url,width:400,height:400,colorDark:"#26146b",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M})}catch(e){}},0);
+  setTimeout(()=>{try{if(window.QRCode)new QRCode(qr,{text:url,width:400,height:400,colorDark:"#15130e",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M})}catch(e){}},0);
   return el("div",{class:"join-card"},el("span",{class:"lbl",text:"Join on your phone"}),el("div",{class:"pin",text:H.code}),qr,
     el("p",{class:"sub",style:"margin:0"},document.createTextNode("Scan the code, or go to "),el("span",{class:"join-url",text:SITE.replace(/^https?:\/\//,"").replace(/\/$/,"")}),document.createTextNode(" and enter the PIN.")));
 }

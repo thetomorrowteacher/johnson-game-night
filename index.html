@@ -5,32 +5,32 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Johnson Family Game Night</title>
 <meta name="description" content="Johnson Family Game Night: party games on the TV, played on everyone’s phones.">
-<meta name="theme-color" content="#5b2fb2">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b2fb2'/%3E%3Ctext x='32' y='46' font-size='40' text-anchor='middle' font-family='Arial Black' fill='%234fb4ff'%3EG%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#123d1d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23123d1d'/%3E%3Ctext x='32' y='46' font-size='40' text-anchor='middle' font-family='Arial Black' fill='%23f6c21c'%3EG%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Figtree:wght@400;600;800&display=swap">
 <style>
 /* Layout: a lavender-to-sky "game table" with white playing cards; phones get one column, the host/TV screen widens to two. */
 :root{
-  --bg:#5b2fb2;          /* royal purple */
-  --bg2:#1b5fd4;         /* cobalt blue */
-  --felt:#26146b;        /* deep violet: ink on cards, dark buttons */
-  --card:#fbfaff;
-  --ink:#1f1d3d;
-  --muted:#625a8c;
-  --line:#e1dbf4;
-  --soft:#f0ebff;        /* chips, quiet fills */
-  --sky:#4fb4ff;         /* electric blue: primary action */
-  --sky-soft:#e0f0ff;
-  --lav:#8a5cf6;         /* violet accent */
-  --lav-soft:#efe7ff;
-  --berry:#b8366a;       /* alerts, losses */
-  --win:#1d6f57;
-  --on-bg:#ffffff;       /* text on the page background */
-  --on-bg-dim:#d9cffa;
-  --on-bg-alert:#ffc2d6;
-  --on-bg-win:#a3f0d2;
+  --bg:#123d1d;          /* deep green */
+  --bg2:#0a0a07;         /* black */
+  --felt:#15130e;        /* black: ink on cards, dark buttons */
+  --card:#fffaee;
+  --ink:#1a1710;
+  --muted:#5f5843;
+  --line:#eadfbf;
+  --soft:#f6efd9;        /* chips, quiet fills */
+  --sky:#f6c21c;         /* gold: primary action */
+  --sky-soft:#fff1bf;
+  --lav:#2f9a2b;         /* green accent */
+  --lav-soft:#e2f2dc;
+  --berry:#c8211a;       /* red: alerts, losses */
+  --win:#1f7a24;
+  --on-bg:#fffaee;       /* text on the page background */
+  --on-bg-dim:#e3d9b6;
+  --on-bg-alert:#ff8a7a;
+  --on-bg-win:#8ee07e;
   --chalk:#f4f2ff;       /* light text on dark fills */
   --display:"Bowlby One","Arial Black",Impact,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -40,7 +40,7 @@
 html,body{height:100%}
 body{
   background:var(--bg);
-  background-image:linear-gradient(160deg,var(--bg) 0%,var(--bg) 35%,var(--bg2) 100%);
+  background-image:radial-gradient(ellipse at 15% -10%,rgba(47,154,43,.55),transparent 55%),radial-gradient(ellipse at 110% 110%,rgba(200,33,26,.35),transparent 50%),linear-gradient(170deg,var(--bg) 0%,var(--bg2) 75%);
   background-attachment:fixed;
   color:var(--on-bg);font-family:var(--body);font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
@@ -97,7 +97,7 @@ button[disabled]{opacity:.45;cursor:not-allowed}
 .mode b{font-family:var(--display);font-weight:400;font-size:1.25rem;color:var(--felt)}
 .mode span{font-weight:400;color:var(--muted)}
 .mode.primary{background:var(--sky)}
-.mode.primary span{color:#1d3c5a}
+.mode.primary span{color:#3d2f05}
 .define{font-size:.9rem;color:var(--on-bg-dim);margin:0}
 .define i{font-family:var(--display);font-style:normal;color:var(--sky)}
 
@@ -180,7 +180,7 @@ img{max-width:100%}
 .hub-title{font-family:var(--display);font-weight:400;font-size:clamp(2.6rem,11vw,4.2rem);line-height:.95;margin:0;color:var(--on-bg);text-shadow:4px 4px 0 var(--felt)}
 .join-hero{text-align:left;background:var(--sky);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:2px;box-shadow:0 4px 0 var(--felt),0 14px 30px rgba(0,0,0,.25)}
 .join-hero b{font-family:var(--display);font-weight:400;font-size:1.5rem;color:var(--felt)}
-.join-hero span{font-weight:600;color:#14325a}
+.join-hero span{font-weight:600;color:#3d2f05}
 .shelf-label{font-size:1rem;letter-spacing:.06em}
 .shelf{display:grid;gap:12px}
 .game-tile{background:var(--card);color:var(--ink);border-radius:18px;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr);box-shadow:0 4px 0 var(--felt),0 14px 30px rgba(0,0,0,.22)}
@@ -199,20 +199,36 @@ img{max-width:100%}
 .join-card .sub{color:var(--muted)}
 .logo{white-space:nowrap;font-size:1.35rem}
 body.at-home header.top .logo{visibility:hidden}
+
+/* Adventures with the Johnsons brand */
+.logo{display:flex;flex-direction:row;align-items:center;gap:8px;font-size:1.25rem}
+.logo img{width:84px;height:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.logo-text{color:var(--on-bg)}
+.logo-text span{color:var(--sky);-webkit-text-stroke:0;text-shadow:2px 2px 0 var(--berry)}
+.logo span:not(.logo-text){text-shadow:2px 2px 0 var(--berry)}
+.hero{align-items:center;text-align:center}
+.hero-logo{width:min(560px,100%);height:auto;margin-bottom:-6px;filter:drop-shadow(0 6px 18px rgba(0,0,0,.45))}
+.hub-title{background:linear-gradient(180deg,#e4291f 0%,#e4291f 30%,#3fb02f 62%,#2a1a0c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1.5px var(--sky);text-shadow:none;filter:drop-shadow(3px 4px 0 rgba(0,0,0,.55));font-style:italic;letter-spacing:.01em}
+.game-art{background-color:var(--felt);background-image:linear-gradient(135deg,rgba(200,33,26,.35),transparent 45%,rgba(47,154,43,.35)),repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 10px,transparent 10px 20px)}
+.game-art span{text-shadow:3px 3px 0 var(--berry)}
+.game-name span{color:var(--lav)}
+.secret{background-image:repeating-linear-gradient(45deg,#fbe9b0 0 10px,var(--card) 10px 20px)}
+.secret.peek{background-image:none}
+.tally .bar i{background:linear-gradient(90deg,var(--berry),var(--sky),var(--lav))}
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
   <header class="top">
-    <button class="logo" id="homeLink" aria-label="Game Night home"><small>Johnson Family</small>Game <span>Night</span></button>
+    <button class="logo" id="homeLink" aria-label="Game Night home"><img src="logo.png" alt="" width="84" height="52"><span class="logo-text">Game <span>Night</span></span></button>
     <span class="row" style="gap:12px"><span class="conn" id="conn" hidden><i></i><span>Live</span></span><span class="round-tag" id="roundTag"></span></span>
   </header>
 
   <!-- HOME: Game Night hub -->
   <section id="vHome">
     <div class="hero">
-      <p class="eyebrow">The Johnson family presents</p>
-      <h1 class="hub-title">Game Night</h1>
+      <img class="hero-logo" src="logo.png" alt="Adventures with the Johnsons" width="1100" height="683">
+      <h1 class="hub-title">Family Game Night</h1>
       <p class="sub">Pick a game for the TV, then everyone joins on their own phone.</p>
     </div>
     <button class="join-hero" id="goJoin"><b>Join a game</b><span>Got a PIN from the TV? Tap here and type it in.</span></button>

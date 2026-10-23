@@ -216,7 +216,7 @@ body.at-home header.top .logo{visibility:hidden}
 .secret.peek{background-image:none}
 .tally .bar i{background:linear-gradient(90deg,var(--berry),var(--sky),var(--lav))}
 
-/* Flaudjer tile art with parallax */
+/* Flaugin tile art with parallax */
 .game-tile:not(.soon){grid-template-columns:minmax(0,1fr)!important}
 .game-art.parallax{position:relative;overflow:hidden;display:block;height:clamp(210px,52vw,320px);background:var(--felt)}
 .parallax-img{position:absolute;left:50%;top:50%;width:118%;height:auto;min-height:130%;object-fit:cover;object-position:50% 32%;
@@ -250,9 +250,9 @@ body.at-home header.top .logo{visibility:hidden}
           <span class="art-tag">One of you is faking it</span>
         </div>
         <div class="game-body">
-          <h3 class="game-name">Flaud<span>jer</span></h3>
-          <p class="define"><i>Flaudjer</i> (n.) Memphis slang for somebody faking it.</p>
-          <p class="game-desc">Everyone gets the secret word except the Flaudjer. Give one-word clues, sniff out the faker, and vote them out. 3 to 30 players, ages 6 and up.</p>
+          <h3 class="game-name">Flau<span>gin</span></h3>
+          <p class="define"><i>Flaugin’</i> (adj.) Memphis slang for lying, fronting, faking it.</p>
+          <p class="game-desc">Everyone gets the secret word except whoever’s flaugin’. Give one-word clues, sniff out the faker, and vote them out. 3 to 30 players, ages 6 and up.</p>
           <div class="row">
             <button id="goHost">Host on the TV</button>
             <button class="btn-ghost" id="goLocal">One-phone game</button>
@@ -272,7 +272,7 @@ body.at-home header.top .logo{visibility:hidden}
   <!-- SETUP (shared by host + one-phone) -->
   <section id="vSetup" hidden>
     <div>
-      <p class="eyebrow">Flaudjer</p>
+      <p class="eyebrow">Flaugin</p>
       <h2 id="setupTitle">Set the table</h2>
       <p class="sub" id="setupSub"></p>
     </div>
@@ -291,23 +291,23 @@ body.at-home header.top .logo{visibility:hidden}
     </div>
     <div class="panel">
       <h3>House rules</h3>
-      <label class="toggle"><input type="checkbox" id="optHint" checked><span>Flaudjer sees the pack name<small>Recommended for younger players.</small></span></label>
+      <label class="toggle"><input type="checkbox" id="optHint" checked><span>The faker sees the pack name<small>Recommended for younger players.</small></span></label>
       <label class="toggle"><input type="checkbox" id="optTimer" checked><span>Two-minute talk timer<small>Keeps the discussion moving before the vote.</small></span></label>
       <div class="row" style="justify-content:space-between">
-        <span style="font-weight:600">Flaudjers</span>
-        <div class="seg" role="group" aria-label="Number of Flaudjers">
+        <span style="font-weight:600">Fakers</span>
+        <div class="seg" role="group" aria-label="Number of fakers">
           <button type="button" data-fibs="1" aria-pressed="true">One</button>
           <button type="button" data-fibs="2" aria-pressed="false">Two</button>
         </div>
       </div>
-      <p class="status" id="fibNote">Two Flaudjers kicks in only when 6 or more people play.</p>
+      <p class="status" id="fibNote">Two fakers kicks in only when 6 or more people play.</p>
     </div>
     <button class="btn-big" id="startBtn">Deal the cards</button>
     <ol class="rules">
-      <li>Everyone looks at their secret card. The Flaudjer's card has no word.</li>
+      <li>Everyone looks at their secret card. The faker’s card has no word.</li>
       <li>Go around the table. Everyone says one word that fits the secret.</li>
-      <li>Talk it over, then vote out the player you think is the Flaudjer.</li>
-      <li>A caught Flaudjer gets one guess at the word to steal the round.</li>
+      <li>Talk it over, then vote out the player you think is flaugin’.</li>
+      <li>A caught faker gets one guess at the word to steal the round.</li>
     </ol>
   </section>
 
@@ -342,7 +342,7 @@ body.at-home header.top .logo{visibility:hidden}
   <!-- ONE-PHONE: VOTE -->
   <section id="vVote" hidden>
     <div>
-      <h2>Who's the Flaudjer?</h2>
+      <h2>Who’s flaugin’?</h2>
       <p class="sub" id="voteSub">Count hands, then tap the player with the most votes.</p>
     </div>
     <div class="panel"><div class="vote-grid" id="voteGrid"></div></div>
@@ -355,7 +355,7 @@ body.at-home header.top .logo{visibility:hidden}
     <p class="reveal-line" id="caughtLine"></p>
     <div class="panel">
       <h3>Last chance</h3>
-      <p class="sub">The Flaudjer gets one guess at the secret word. Say it out loud, then reveal the answer.</p>
+      <p class="sub">The faker gets one guess at the secret word. Say it out loud, then reveal the answer.</p>
       <button class="btn-felt" id="showWord">Show the word</button>
       <p class="verdict" id="guessWord" hidden style="color:var(--felt);font-size:1.8rem"></p>
       <div class="row" id="guessBtns" hidden>
@@ -374,7 +374,7 @@ body.at-home header.top .logo{visibility:hidden}
     <div class="panel">
       <h3>Scoreboard</h3>
       <table class="scores"><tbody id="scoreBody"></tbody></table>
-      <p class="sub" style="font-size:.82rem">Flaudjer escapes: +2. Flaudjer caught but guesses the word: +1. Flaudjer caught and misses: +1 to everyone else.</p>
+      <p class="sub" style="font-size:.82rem">Faker escapes: +2. Faker caught but guesses the word: +1. Flaugin caught and misses: +1 to everyone else.</p>
     </div>
     <button class="btn-big" id="nextRound">Next round</button>
     <div class="row" style="justify-content:center">

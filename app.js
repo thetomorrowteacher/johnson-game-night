@@ -1,4 +1,4 @@
-/* Flaudjer — hosted edition.
+/* Flaugin — hosted edition.
    Big screen hosts a live room (Supabase Realtime); phones join with a PIN or QR.
    Secret cards come from the `flaudjer` edge function, so each phone only ever sees its own card. */
 (function(){
@@ -30,7 +30,21 @@ const $=id=>document.getElementById(id);
 const VIEWS=["vHome","vSetup","vPass","vClues","vVote","vGuess","vResult","vHost","vJoin","vPlayer"];
 function show(id){VIEWS.forEach(v=>{$(v).hidden=v!==id});document.body.classList.toggle("at-home",id==="vHome");window.scrollTo(0,0)}
 function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const k in attrs){const v=attrs[k];if(v==null)continue;if(k==="class")e.className=v;else if(k==="text")e.textContent=v;else if(k.startsWith("on"))e[k]=v;else e.setAttribute(k,v)}kids.forEach(c=>c!=null&&e.append(c));return e}
-function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function rnd(n){try{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+/* Pick fakers fairly: anyone who was the faker in the last couple of rounds gets a lower chance, so streaks don't feel rigged. */
+function pickFakers(names,count){
+  const recent=store.get("recentFakers",[]);   // newest first, list of name arrays
+  const weightOf=n=>recent[0]&&recent[0].includes(n)?0.2:recent[1]&&recent[1].includes(n)?0.55:1;
+  const pool=names.map((n,i)=>({i,w:weightOf(n)}));const out=[];
+  while(out.length<count&&pool.length){
+    const total=pool.reduce((t,x)=>t+x.w,0);let r=(rnd(1e6)/1e6)*total,k=0;
+    for(;k<pool.length-1;k++){r-=pool[k].w;if(r<0)break}
+    out.push(pool[k].i);pool.splice(k,1);
+  }
+  store.set("recentFakers",[out.map(i=>names[i])].concat(recent).slice(0,3));
+  return out;
+}
 function fmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
 function setTag(t){$("roundTag").textContent=t}
 let wakeLock=null;
@@ -65,8 +79,8 @@ function makeCard({isFib,word,packName,twoFibs,onPeek}){
   const front=el("div",{class:"front"});
   if(isFib){
     let h=packName?"Pack: "+packName+". Blend in!":"No word for you. Blend in!";
-    if(twoFibs)h+=" There's another Flaudjer too.";
-    front.append(el("span",{class:"label",text:"You are"}),el("span",{class:"word",text:"The Flaudjer"}),el("span",{class:"hint",text:h}));
+    if(twoFibs)h+=" Someone else is flaugin’ too.";
+    front.append(el("span",{class:"label",text:"You are"}),el("span",{class:"word",text:"Flaugin’"}),el("span",{class:"hint",text:h}));
   }else{
     front.append(el("span",{class:"label",text:"Secret word"}),el("span",{class:"word",text:word}),el("span",{class:"hint",text:packName?"Pack: "+packName:""}));
   }
@@ -92,8 +106,8 @@ function award(sc,outcome,ids,fibIds,votedId){
 }
 function verdictText(outcome,fibText,votedName){
   return outcome==="escaped"?[fibText+" got away!","lose","You voted out "+votedName+", who knew the word."]:
-    outcome==="stole"?[votedName+" guessed it!","lose","Caught, but the Flaudjer still figured out the word."]:
-    ["The family wins!","win","Flaudjer caught and the word stayed safe."];
+    outcome==="stole"?[votedName+" guessed it!","lose","Caught, but the faker still figured out the word."]:
+    ["The family wins!","win","Faker caught and the word stayed safe."];
 }
 function renderScoreTable(body,rows){
   body.textContent="";rows=rows.slice().sort((a,b)=>b[1]-a[1]);const top=rows.length?rows[0][1]:0;
@@ -107,14 +121,14 @@ $("homeLink").onclick=()=>{
 };
 let leaveArmed=0;
 function confirmLeave(){const now=Date.now();if(now-leaveArmed<3000)return true;leaveArmed=now;setTag("Tap the logo again to leave");return false}
-$("goLocal").onclick=()=>{mode="local";setTag("Flaudjer");openSetup()};
-$("goHost").onclick=()=>{mode="host";setTag("Flaudjer");openSetup()};
+$("goLocal").onclick=()=>{mode="local";setTag("Flaugin");openSetup()};
+$("goHost").onclick=()=>{mode="host";setTag("Flaugin");openSetup()};
 $("goJoin").onclick=()=>openJoin("");
 function renderHome(){
   document.querySelectorAll(".resume").forEach(n=>n.remove());
   const h=store.get("host",null);
   if(h&&Date.now()-h.at<12*3600e3&&sb){
-    $("goJoin").before(el("div",{class:"resume"},el("span",{text:"Your Flaudjer room "+h.code+" is still open."}),
+    $("goJoin").before(el("div",{class:"resume"},el("span",{text:"Your Flaugin room "+h.code+" is still open."}),
       el("button",{class:"btn-small",text:"Resume on this screen",onclick:()=>{mode="host";resumeRoom(h)}})));
   }
   $("homeNote").textContent=sb?"":"The live game server didn't load. Check your connection; the one-phone game still works.";
@@ -155,7 +169,7 @@ function renderPacks(){
 function renderFibs(){
   if(mode==="local"&&players.length<6&&fibs===2)fibs=1;
   document.querySelectorAll("[data-fibs]").forEach(b=>{b.setAttribute("aria-pressed",String(Number(b.dataset.fibs)===fibs));if(b.dataset.fibs==="2")b.disabled=mode==="local"&&players.length<6});
-  $("fibNote").textContent=mode==="local"?(players.length>=6?"":"Two Flaudjers unlocks at 6 players."):"Two Flaudjers kicks in only when 6 or more phones join.";
+  $("fibNote").textContent=mode==="local"?(players.length>=6?"":"Two fakers unlocks at 6 players."):"Two fakers kicks in only when 6 or more phones join.";
 }
 document.querySelectorAll("[data-fibs]").forEach(b=>b.onclick=()=>{fibs=Number(b.dataset.fibs);store.set("fibs",fibs);renderFibs()});
 $("optHint").checked=store.get("hint",true);
@@ -174,11 +188,11 @@ $("startBtn").onclick=()=>{
 let game=null;
 function startLocalRound(){
   keepAwake();
-  const pid=resolvePack();const pool=poolFor(pid);const word=pool[Math.floor(Math.random()*pool.length)];markUsed(pid,word);
-  const fibIdx=shuffle(players.map((_,i)=>i)).slice(0,players.length>=6?fibs:1);
+  const pid=resolvePack();const pool=poolFor(pid);const word=pool[rnd(pool.length)];markUsed(pid,word);
+  const fibIdx=pickFakers(players,players.length>=6?fibs:1);
   roundNo++;store.set("round",roundNo);
   game={pid,word,fibIdx,turn:0,deal:shuffle(players.map((_,i)=>i)),voted:null};
-  setTag("Flaudjer · Round "+roundNo);showPass();
+  setTag("Flaugin · Round "+roundNo);showPass();
 }
 function showPass(){
   const i=game.deal[game.turn];
@@ -201,7 +215,7 @@ $("timerBtn").onclick=()=>{
 };
 $("timerReset").onclick=resetTimer;
 function showClues(){
-  const start=Math.floor(Math.random()*players.length);const ol=$("orderList");ol.textContent="";
+  const start=rnd(players.length);const ol=$("orderList");ol.textContent="";
   for(let k=0;k<players.length;k++)ol.append(el("li",{text:players[(start+k)%players.length]}));
   $("timerPanel").hidden=!$("optTimer").checked;resetTimer();show("vClues");
 }
@@ -210,13 +224,13 @@ function showVote(){
   game.voted=null;const g=$("voteGrid");g.textContent="";
   players.forEach((n,i)=>{const b=el("button",{type:"button",text:n,"aria-pressed":"false"});
     b.onclick=()=>{game.voted=i;g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));$("lockVote").disabled=false;$("lockVote").textContent="Reveal "+n};g.append(b)});
-  $("voteSub").textContent=game.fibIdx.length>1?"Two Flaudjers this round. Vote one out; catch either to win.":"Count hands, then tap the player with the most votes.";
+  $("voteSub").textContent=game.fibIdx.length>1?"Two fakers this round. Vote one out; catch either to win.":"Count hands, then tap the player with the most votes.";
   $("lockVote").disabled=true;$("lockVote").textContent="Reveal";show("vVote");
 }
 $("lockVote").onclick=()=>{
   const v=game.voted;
   if(game.fibIdx.includes(v)){
-    $("caughtTitle").textContent="Caught! "+players[v]+" was a Flaudjer.";
+    $("caughtTitle").textContent="Caught! "+players[v]+" was flaugin’.";
     $("caughtLine").textContent=players[v]+", what do you think the word was?";
     $("guessWord").hidden=true;$("guessBtns").hidden=true;$("showWord").hidden=false;show("vGuess");
   }else finishLocal("escaped");
@@ -229,11 +243,11 @@ function finishLocal(outcome){
   award(scores,outcome,players,fibNames,players[game.voted]);store.set("scores",scores);
   const [t,cls,line]=verdictText(outcome,fibText,players[game.voted]);
   $("resTitle").className="verdict "+cls;$("resTitle").textContent=t;
-  const l=$("resLine");l.textContent=line+" The word was ";l.append(el("b",{text:game.word}),document.createTextNode(". Flaudjer"+(fibNames.length>1?"s":"")+": "+fibText+"."));
+  const l=$("resLine");l.textContent=line+" The word was ";l.append(el("b",{text:game.word}),document.createTextNode(". Flaugin’: "+fibText+"."));
   renderScoreTable($("scoreBody"),players.map(n=>[n,scores[n]||0]));show("vResult");
 }
 $("nextRound").onclick=startLocalRound;
-$("toSetup").onclick=()=>{setTag("Flaudjer");openSetup()};
+$("toSetup").onclick=()=>{setTag("Flaugin");openSetup()};
 let resetArmed=false;
 $("resetScores").onclick=()=>{
   if(!resetArmed){resetArmed=true;$("resetScores").textContent="Tap again to reset";setTimeout(()=>{resetArmed=false;$("resetScores").textContent="Reset scores"},3000);return}
@@ -289,7 +303,7 @@ function resumeRoom(h){
     });
   clearInterval(hostBeat);hostBeat=setInterval(broadcast,4000);
   clearInterval(hostTick);hostTick=setInterval(()=>{if(H&&H.phase==="clues"&&H.endsAt){const t=$("hostTimer");if(t)t.textContent=H.endsAt-Date.now()>0?fmt((H.endsAt-Date.now())/1000):"Vote!"}},500);
-  mode="host";setTag("Flaudjer · Room "+H.code);show("vHost");renderHost();
+  mode="host";setTag("Flaugin · Room "+H.code);show("vHost");renderHost();
 }
 function saveHost(){store.set("host",{code:H.code,hostToken:H.hostToken,at:Date.now(),scores:H.scores,names:H.names,round:H.round})}
 function phones(){
@@ -323,8 +337,8 @@ async function hostDeal(){
     H.roster=roster;roster.forEach(x=>H.names[x.pid]=x.name);
     H.round=r.round;H.packId=pid;H.fibCount=r.fibCount;H.ready={};H.votes={};H.voted=null;H.outcome="";H.tally=null;H.tie=false;H.showWord=false;H.endsAt=0;H.word="";H.fib=[];
     H.timerOn=$("optTimer").checked;H.hint=$("optHint").checked;
-    const start=Math.floor(Math.random()*roster.length);H.order=roster.map((_,k)=>roster[(start+k)%roster.length].pid);
-    setTag("Flaudjer · Room "+H.code+" · Round "+H.round);H.err="";
+    const start=rnd(roster.length);H.order=roster.map((_,k)=>roster[(start+k)%roster.length].pid);
+    setTag("Flaugin · Room "+H.code+" · Round "+H.round);H.err="";
     setPhase("cards");
   }catch(e){H.err=e.message;renderHost()}
   finally{dealing=false;renderHost()}
@@ -358,7 +372,7 @@ function renderHost(){
   const main=$("hostMain"),side=$("hostSide");main.textContent="";side.textContent="";
   const ph=phones();
   if(H.phase==="lobby"){
-    main.append(el("p",{class:"eyebrow",text:"Flaudjer"}),el("p",{class:"big-msg",text:"Grab your phones!"}),el("p",{class:"sub",text:"3 to 30 players. Late arrivals join the next round."}));
+    main.append(el("p",{class:"eyebrow",text:"Flaugin"}),el("p",{class:"big-msg",text:"Grab your phones!"}),el("p",{class:"sub",text:"3 to 30 players. Late arrivals join the next round."}));
     main.append(el("div",{class:"panel"},el("h3",{text:"Players in · "+ph.length}),ph.length?chipsFor(ph,()=>true):el("p",{class:"sub",text:"Waiting for the first player…"})));
     const go=el("button",{class:"btn-big",text:dealing?"Dealing…":ph.length<3?"Need "+(3-ph.length)+" more to start":"Deal the cards",onclick:hostDeal});go.disabled=ph.length<3||dealing;
     main.append(go,errLine(),el("div",{class:"row"},
@@ -387,7 +401,7 @@ function renderHost(){
   }
   if(H.phase==="vote"){
     const n=H.roster.filter(r=>H.votes[r.pid]).length;
-    main.append(el("p",{class:"big-msg",text:"Who's the Flaudjer? Vote on your phone."}));
+    main.append(el("p",{class:"big-msg",text:"Who’s flaugin’? Vote on your phone."}));
     main.append(el("div",{class:"panel"},el("h3",{text:"Votes in · "+n+" of "+H.roster.length}),chipsFor(H.roster,r=>H.votes[r.pid])));
     if(H.tie){
       side.append(el("div",{class:"panel"},el("h3",{text:n?"It's a tie!":"No votes yet"}),tallyBars(false),el("p",{class:"sub",text:"Talk it out, then vote again."}),el("button",{class:"btn-felt",text:"Vote again",onclick:hostRevote})));
@@ -396,7 +410,7 @@ function renderHost(){
     main.append(rv,errLine());return;
   }
   if(H.phase==="guess"){
-    main.append(el("p",{class:"verdict win",text:"Caught! "+nameOf(H.voted)+" was a Flaudjer."}),el("p",{class:"reveal-line",text:nameOf(H.voted)+", say your guess for the secret word out loud."}));
+    main.append(el("p",{class:"verdict win",text:"Caught! "+nameOf(H.voted)+" was flaugin’."}),el("p",{class:"reveal-line",text:nameOf(H.voted)+", say your guess for the secret word out loud."}));
     const p=el("div",{class:"panel"},el("h3",{text:"Last chance"}));
     if(!H.showWord)p.append(el("button",{class:"btn-felt",text:"Show the word",onclick:()=>{H.showWord=true;broadcast();renderHost()}}));
     else p.append(el("p",{class:"verdict",style:"color:var(--felt)",text:H.word}),el("div",{class:"row"},el("button",{text:"They got it",style:"flex:1",onclick:()=>hostFinish("stole")}),el("button",{class:"btn-ghost",text:"They missed",style:"flex:1",onclick:()=>hostFinish("caught")})));
@@ -405,9 +419,9 @@ function renderHost(){
   if(H.phase==="result"){
     const fibNames=H.fib.map(nameOf);const [t,cls,line]=verdictText(H.outcome,fibNames.join(" and "),nameOf(H.voted));
     main.append(el("p",{class:"verdict "+cls,text:t}));
-    const l=el("p",{class:"reveal-line",text:line+" The word was "});l.append(el("b",{text:H.word}),document.createTextNode(". Flaudjer"+(fibNames.length>1?"s":"")+": "+fibNames.join(" and ")+"."));main.append(l);
+    const l=el("p",{class:"reveal-line",text:line+" The word was "});l.append(el("b",{text:H.word}),document.createTextNode(". Flaugin’: "+fibNames.join(" and ")+"."));main.append(l);
     const body=el("tbody");renderScoreTable(body,H.roster.map(r=>[r.name,H.scores[r.pid]||0]));
-    main.append(el("div",{class:"panel"},el("h3",{text:"Scoreboard"}),el("table",{class:"scores"},body),el("p",{class:"sub",style:"font-size:.82rem",text:"Flaudjer escapes: +2. Caught but guesses the word: +1. Caught and misses: +1 to everyone else."})));
+    main.append(el("div",{class:"panel"},el("h3",{text:"Scoreboard"}),el("table",{class:"scores"},body),el("p",{class:"sub",style:"font-size:.82rem",text:"Faker escapes: +2. Caught but guesses the word: +1. Caught and misses: +1 to everyone else."})));
     const nx=el("button",{class:"btn-big",text:dealing?"Dealing…":ph.length>=3?"Next round":"Need 3 phones for the next round",onclick:hostDeal});nx.disabled=ph.length<3||dealing;
     main.append(nx,errLine(),el("div",{class:"row"},el("button",{class:"btn-chalk btn-small",text:"Change pack or rules",onclick:()=>openSetup()}),el("button",{class:"btn-chalk btn-small",text:"Close room",onclick:closeRoom})));
     side.append(el("div",{class:"panel"},el("h3",{text:"The votes"}),tallyBars(true)),joinCard());return;
@@ -415,7 +429,7 @@ function renderHost(){
 }
 function tallyBars(markFib){
   const t=el("div",{class:"tally"});const c=H.tally||tally();const max=Math.max(1,...Object.values(c));
-  Object.keys(c).sort((a,b)=>c[b]-c[a]).forEach(k=>t.append(el("div",{class:"bar"},el("span",{text:nameOf(k)+(markFib&&H.fib.includes(k)?" (Flaudjer)":"")}),el("i",{style:"width:"+(c[k]/max*100)+"%"}),el("b",{text:String(c[k])}))));
+  Object.keys(c).sort((a,b)=>c[b]-c[a]).forEach(k=>t.append(el("div",{class:"bar"},el("span",{text:nameOf(k)+(markFib&&H.fib.includes(k)?" (flaugin’)":"")}),el("i",{style:"width:"+(c[k]/max*100)+"%"}),el("b",{text:String(c[k])}))));
   return t;
 }
 let closeArmed=0;
@@ -462,7 +476,7 @@ function startPlayer(pin,me){
       if(status==="SUBSCRIBED"){setConn(true);ch.track({pid:me.pid,name:me.name});ch.send({type:"broadcast",event:"hello",payload:{pid:me.pid}}).catch(()=>{})}
       else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED")setConn(false);
     });
-  setTag("Flaudjer · Room "+pin);show("vPlayer");renderPlayer();
+  setTag("Flaugin · Room "+pin);show("vPlayer");renderPlayer();
   setTimeout(()=>{if(P&&!P.state){P.slow=true;renderPlayer()}},7000);
 }
 function onState(s){
@@ -530,16 +544,16 @@ function renderPlayer(){
   }
   if(s.phase==="vote"){
     const mine=P.vote&&P.vote.r===s.voteRound?P.vote.target:null;
-    v.append(el("p",{class:"big-msg",text:"Who's the Flaudjer?"}),el("p",{class:"sub",text:mine?"Vote sent. Tap another name to change it.":"Tap one name. Votes stay secret until the reveal."}));
+    v.append(el("p",{class:"big-msg",text:"Who’s flaugin’?"}),el("p",{class:"sub",text:mine?"Vote sent. Tap another name to change it.":"Tap one name. Votes stay secret until the reveal."}));
     const g=el("div",{class:"vote-grid"});
     s.roster.filter(r=>r.pid!==P.pid).forEach(r=>g.append(el("button",{type:"button",text:r.name,"aria-pressed":String(mine===r.pid),onclick:()=>{P.vote={r:s.voteRound,target:r.pid};sendVote();renderPlayer()}})));
     v.append(el("div",{class:"panel"},g));
-    if(P.card&&P.card.isFib)v.append(el("p",{class:"status on-felt",text:"You're a Flaudjer. Vote for someone else to keep your cover."}));
+    if(P.card&&P.card.isFib)v.append(el("p",{class:"status on-felt",text:"You’re flaugin’. Vote for someone else to keep your cover."}));
     return;
   }
   if(s.phase==="guess"){
     const caught=s.votedOut===P.pid;
-    v.append(el("p",{class:"big-msg",text:caught?"You've been caught!":"Flaudjer caught!"}),
+    v.append(el("p",{class:"big-msg",text:caught?"You've been caught!":"Caught flaugin’!"}),
       el("p",{class:"sub",text:caught?"Say your best guess for the word out loud. Get it right to steal the round.":rosterName(s,s.votedOut)+" gets one guess at the word."}));
     if(s.showWord&&s.word)v.append(el("div",{class:"panel"},el("h3",{text:"The word was"}),el("p",{class:"verdict",style:"color:var(--felt)",text:s.word})));
     return;
@@ -550,7 +564,7 @@ function renderPlayer(){
     const amFib=fibIds.includes(P.pid);
     const scored=s.outcome==="escaped"?amFib:s.outcome==="stole"?s.votedOut===P.pid:!amFib;
     v.append(el("p",{class:"verdict "+(scored?"win":"lose"),text:scored?"You scored!":t}));
-    const l=el("p",{class:"reveal-line",text:"The word was "});l.append(el("b",{text:s.word||"?"}),document.createTextNode(". Flaudjer"+(fibNames.length>1?"s":"")+": "+fibNames.join(" and ")+"."));
+    const l=el("p",{class:"reveal-line",text:"The word was "});l.append(el("b",{text:s.word||"?"}),document.createTextNode(". Flaugin’: "+fibNames.join(" and ")+"."));
     v.append(l,myScore(s),el("p",{class:"sub",text:"The next round starts from the big screen."}));
     return;
   }

@@ -562,6 +562,41 @@ function myScore(s){
     el("p",{class:"sub",text:rank?"Place "+rank+" of "+rows.length+".":"No points yet."}));
 }
 
+
+/* ---------- parallax for game art ---------- */
+(function(){
+  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduce)return;
+  const items=[...document.querySelectorAll("[data-parallax]")];
+  if(!items.length)return;
+  const ptr=new WeakMap();
+  let queued=false;
+  function frame(){
+    queued=false;const vh=window.innerHeight||800;
+    items.forEach(box=>{
+      if(box.offsetParent===null)return;
+      const r=box.getBoundingClientRect();
+      if(r.bottom<-100||r.top>vh+100)return;
+      const p=(r.top+r.height/2-vh/2)/vh;           // -0.5 .. 0.5 across the screen
+      const m=ptr.get(box)||{x:0,y:0};
+      const img=box.querySelector(".parallax-img"),tag=box.querySelector(".art-tag");
+      img.style.setProperty("--py",(p*-70+m.y*-14).toFixed(1)+"px");
+      img.style.setProperty("--px",(m.x*-18).toFixed(1)+"px");
+      img.style.setProperty("--ps",m.on?"1.04":"1");
+      if(tag){tag.style.setProperty("--tx",(m.x*10).toFixed(1)+"px");tag.style.setProperty("--ty",(p*18+m.y*6).toFixed(1)+"px")}
+    });
+  }
+  function q(){if(!queued){queued=true;requestAnimationFrame(frame)}}
+  items.forEach(box=>{
+    const tile=box.closest(".game-tile")||box;
+    tile.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const r=tile.getBoundingClientRect();ptr.set(box,{x:(e.clientX-r.left)/r.width-.5,y:(e.clientY-r.top)/r.height-.5,on:true});q()});
+    tile.addEventListener("pointerleave",()=>{ptr.set(box,{x:0,y:0,on:false});q()});
+  });
+  window.addEventListener("scroll",q,{passive:true});
+  window.addEventListener("resize",q);
+  new MutationObserver(q).observe(document.body,{attributes:true,attributeFilter:["class"]});
+  q();
+})();
 /* ---------- boot ---------- */
 const qs=new URLSearchParams(location.search);
 const pinIn=(qs.get("pin")||location.hash.replace("#","")||"").toUpperCase().replace(/[^A-Z]/g,"");

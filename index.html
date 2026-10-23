@@ -215,6 +215,16 @@ body.at-home header.top .logo{visibility:hidden}
 .secret{background-image:repeating-linear-gradient(45deg,#fbe9b0 0 10px,var(--card) 10px 20px)}
 .secret.peek{background-image:none}
 .tally .bar i{background:linear-gradient(90deg,var(--berry),var(--sky),var(--lav))}
+
+/* Flaudjer tile art with parallax */
+.game-tile:not(.soon){grid-template-columns:minmax(0,1fr)!important}
+.game-art.parallax{position:relative;overflow:hidden;display:block;height:clamp(210px,52vw,320px);background:var(--felt)}
+.parallax-img{position:absolute;left:50%;top:50%;width:118%;height:auto;min-height:130%;object-fit:cover;object-position:50% 32%;
+  transform:translate3d(calc(-50% + var(--px,0px)),calc(-50% + var(--py,0px)),0) scale(var(--ps,1));will-change:transform;transition:transform .25s ease-out}
+.game-art.parallax::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(21,19,14,.55) 100%),linear-gradient(90deg,rgba(200,33,26,.18),transparent 30%,transparent 70%,rgba(47,154,43,.18))}
+.game-art .art-tag{position:absolute;left:14px;bottom:12px;z-index:1;font-family:var(--display);font-size:clamp(.95rem,3.4vw,1.25rem);line-height:1.1;color:var(--sky);text-shadow:2px 2px 0 var(--berry),0 2px 10px rgba(0,0,0,.6);transform:translate3d(var(--tx,0px),var(--ty,0px),0);transition:transform .25s ease-out}
+@media (prefers-reduced-motion:reduce){.parallax-img,.game-art .art-tag{transition:none}}
 </style>
 </head>
 <body>
@@ -235,7 +245,10 @@ body.at-home header.top .logo{visibility:hidden}
     <h2 class="shelf-label">Tonight's games</h2>
     <div class="shelf">
       <article class="game-tile">
-        <div class="game-art" aria-hidden="true"><span>?</span></div>
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="flaudjer-cat.jpg" alt="" width="1200" height="940" loading="eager" decoding="async">
+          <span class="art-tag">One of you is faking it</span>
+        </div>
         <div class="game-body">
           <h3 class="game-name">Flaud<span>jer</span></h3>
           <p class="define"><i>Flaudjer</i> (n.) Memphis slang for somebody faking it.</p>

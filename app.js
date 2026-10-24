@@ -1140,17 +1140,18 @@ function myScore(s){
   const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches)||navigator.standalone;
   const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   if(standalone)return;                       // already running full screen from the home screen
-  if(!canFs&&!isIOS)return;                   // nothing we can do in this browser
-  btn.hidden=false;
+  btn.hidden=false;                           // always offer it; browsers without the API get instructions instead
+  const isMac=/Mac/.test(navigator.platform||navigator.userAgent);
   const current=()=>document.fullscreenElement||document.webkitFullscreenElement;
   function sync(){const on=!!current();document.body.classList.toggle("is-fs",on);btn.setAttribute("aria-label",on?"Exit full screen":"Full screen");btn.title=on?"Exit full screen (F)":"Full screen (F)";btn.querySelector(".fs-label").textContent=on?"Exit full screen":"Full screen"}
   function tip(msg){document.querySelectorAll(".fs-tip").forEach(n=>n.remove());const t=el("div",{class:"fs-tip",role:"status",text:msg});document.body.append(t);setTimeout(()=>t.remove(),6000)}
   async function toggle(){
-    if(!canFs){tip("On iPhone, tap Share, then Add to Home Screen. Opening Game Night from the home screen runs it full screen.");return}
+    if(!canFs){tip(isIOS?"On iPhone, tap Share, then Add to Home Screen. Opening Game Night from the home screen runs it full screen."
+      :"This browser doesn't let pages go full screen. Use the browser's own full screen: "+(isMac?"press Control + Command + F.":"press F11.")+" Or open Game Night in Chrome, Safari or Edge.");return}
     try{
       if(current()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
       else{const req=root.requestFullscreen||root.webkitRequestFullscreen;await req.call(root,{navigationUI:"hide"});keepAwake()}
-    }catch(e){tip("This browser blocked full screen. Try your browser's own full-screen option.")}
+    }catch(e){tip("This browser blocked full screen. Use the browser's own full screen: "+(isMac?"press Control + Command + F.":"press F11."))}
   }
   btn.addEventListener("click",toggle);
   document.addEventListener("fullscreenchange",sync);document.addEventListener("webkitfullscreenchange",sync);

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+<defs>
+<radialGradient id="felt" cx=".5" cy=".5" r=".7"><stop offset="0" stop-color="#2f7a33"/><stop offset="1" stop-color="#0f2e16"/></radialGradient>
+<filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".5"/></filter>
+</defs>
+<rect width="1200" height="700" fill="url(#felt)"/>
+<g font-family="'Bowlby One','Arial Black',Impact,sans-serif" text-anchor="middle" filter="url(#sh)">
+<g transform="translate(360 380) rotate(-22)"><rect x="-110" y="-160" width="220" height="320" rx="20" fill="#fffaee"/><text y="-60" font-size="54" fill="#15130e">A</text><text y="70" font-size="150" fill="#15130e">♠</text></g>
+<g transform="translate(520 340) rotate(-8)"><rect x="-110" y="-160" width="220" height="320" rx="20" fill="#fffaee"/><text y="-60" font-size="54" fill="#15130e">2</text><text y="70" font-size="150" fill="#15130e">♠</text></g>
+<g transform="translate(690 330) rotate(6)"><rect x="-110" y="-160" width="220" height="320" rx="20" fill="#f6c21c"/><text y="-80" font-size="40" fill="#15130e">LIL</text><text y="40" font-size="110">🃏</text><text y="120" font-size="34" fill="#15130e">JOKER</text></g>
+<g transform="translate(860 360) rotate(20)"><rect x="-110" y="-160" width="220" height="320" rx="20" fill="#c8211a"/><text y="-80" font-size="40" fill="#fffaee">BIG</text><text y="40" font-size="110">🃏</text><text y="120" font-size="34" fill="#fffaee">JOKER</text></g>
+</g>
+</svg>

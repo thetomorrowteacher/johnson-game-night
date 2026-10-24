@@ -568,6 +568,36 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 .night-meter{display:flex;align-items:baseline;gap:12px;color:var(--sky)}
 .night-meter b{font-family:var(--display);font-size:clamp(3rem,10vw,6rem);line-height:1}
 .night-meter span{font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+
+/* ---------- Spades ---------- */
+.pc{position:relative;width:58px;height:84px;border-radius:9px;background:#fffaee;color:#15130e;box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 0 0 1.5px rgba(0,0,0,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;font-family:var(--display);flex:0 0 auto}
+.pc .pr{font-size:1.25rem;line-height:1}.pc .ps{font-size:1.6rem;line-height:1}
+.pc.red{color:#c8211a}
+.pc.joker{background:linear-gradient(160deg,#fffaee,#f6c21c)}.pc.joker.big{background:linear-gradient(160deg,#f6c21c,#c8211a);color:#fffaee}
+.pc.joker .pr{font-size:.8rem;letter-spacing:.08em}.pc.joker .pj{font-size:.55rem;letter-spacing:.1em}.pc.joker .ps{font-size:1.4rem}
+.pc.back{background:repeating-linear-gradient(45deg,#c8211a 0 6px,#a01a14 6px 12px)}
+.pc.dim{opacity:.35;filter:grayscale(.6)}
+.pc.sel{transform:translateY(-14px);box-shadow:0 0 0 3px var(--sky),0 8px 14px rgba(0,0,0,.4)}
+button.pc{cursor:pointer;transition:transform .12s ease}
+.hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:14px 4px 4px}
+.spades-table{position:relative;width:100%;max-width:720px;aspect-ratio:16/10;margin:0 auto;border-radius:50%/40%;background:radial-gradient(ellipse at center,#2f7a33 0%,#1d5a26 60%,#123d1d 100%);box-shadow:inset 0 0 0 10px #5a3a1a,inset 0 0 0 14px #3a240f,0 14px 30px rgba(0,0,0,.4)}
+.spades-table .seat{position:absolute;display:flex;justify-content:center}
+.seat.s-bottom{bottom:-6%;left:50%;transform:translateX(-50%)}.seat.s-top{top:-6%;left:50%;transform:translateX(-50%)}
+.seat.s-left{left:-2%;top:50%;transform:translateY(-50%)}.seat.s-right{right:-2%;top:50%;transform:translateY(-50%)}
+.seat-tag{border-radius:12px;padding:5px 10px;color:#fffaee;display:flex;flex-direction:column;align-items:center;min-width:96px;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.seat-tag b{font-size:.9rem;white-space:nowrap}.seat-tag small{font-size:.72rem;font-weight:700;opacity:.9;white-space:nowrap}
+.seat-tag.turn{box-shadow:0 0 0 3px var(--sky),0 3px 0 rgba(0,0,0,.35)}
+@media (prefers-reduced-motion:no-preference){.seat-tag.turn{animation:nowPulse 1.2s ease-in-out infinite}}
+.trick{position:absolute;inset:22% 28%}
+.trick .slot{position:absolute;display:flex}
+.trick .slot.s-bottom{bottom:0;left:50%;transform:translateX(-50%)}.trick .slot.s-top{top:0;left:50%;transform:translateX(-50%)}
+.trick .slot.s-left{left:0;top:50%;transform:translateY(-50%)}.trick .slot.s-right{right:0;top:50%;transform:translateY(-50%)}
+.trick .slot.won .pc{box-shadow:0 0 0 4px var(--sky),0 6px 14px rgba(0,0,0,.5)}
+@media (prefers-reduced-motion:no-preference){.trick .pc{animation:pop .3s ease both}}
+.bid-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.bid-grid button{padding:14px 0;font-family:var(--display);font-size:1.4rem}
+.your-turn{color:var(--sky)!important;font-weight:800}
+@media (min-width:900px){body.tv .pc{width:84px;height:120px}body.tv .pc .pr{font-size:1.8rem}body.tv .pc .ps{font-size:2.3rem}body.tv .seat-tag b{font-size:1.15rem}}
 </style>
 </head>
 <body>
@@ -690,6 +720,17 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
           <p class="define"><i>Bush crack, man gone</i> Bahamian for “when trouble starts, run.”</p>
           <p class="game-desc">Secret roles on every phone. At night the Opps snatch somebody, Big Mama keeps someone safe, and the Nosy Neighbor peeks in a window. By day, talk it out and vote. 5 to 30 players.</p>
           <div class="row"><button data-host="mafia">Host on the TV</button></div>
+        </div>
+      </article>
+          <article class="game-tile" data-game="spades">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-spades.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">Big Joker, Little Joker, deuce</span>
+        </div>
+        <div class="game-body">
+          <h3 class="game-name">Spa<span>des</span></h3>
+          <p class="game-desc">The cookout classic. Four phones, partners across, bid your books and run the table. House rules: Big Joker, Little Joker, then the 2♠ are the top spades. 4 players (others can watch).</p>
+          <div class="row"><button data-host="spades">Host on the TV</button></div>
         </div>
       </article>
     </div>
@@ -865,11 +906,12 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="fx.js?v=202610241924"></script>
-<script src="content.js?v=202610241924"></script>
-<script src="games/taboo.js?v=202610241924"></script>
-<script src="games/wave.js?v=202610241924"></script>
-<script src="games/mafia.js?v=202610241924"></script>
-<script src="app.js?v=202610241924"></script>
+<script src="fx.js?v=202610241928"></script>
+<script src="content.js?v=202610241928"></script>
+<script src="games/taboo.js?v=202610241928"></script>
+<script src="games/wave.js?v=202610241928"></script>
+<script src="games/mafia.js?v=202610241928"></script>
+<script src="games/spades.js?v=202610241928"></script>
+<script src="app.js?v=202610241928"></script>
 </body>
 </html>

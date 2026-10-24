@@ -4,7 +4,7 @@ Party games on the TV, played on everyone's phones. Open the site on a TV or lap
 
 ## Games
 
-- **Flaugin** (Memphis slang for lying, fronting, faking it). Everyone gets the secret word except whoever is flaugin'. One-word clues, then vote. TV or one phone. Optional **Clown** (turn on in settings, 4+ players): knows the word but wins by getting voted out (+3 to the Clown, +2 to the Flauger).
+- **Flaugin** (Memphis slang for lying, fronting, faking it). Everyone gets the secret word except whoever is flaugin'. One-word clues, then vote. TV or one phone. Optional **Troll** (turn on in settings, 4+ players): knows the word but wins by getting voted out (+3 to the Troll, +2 to the Flauger).
 - **Parrot**. Everyone gets a secret mission for a debate; the Parrot's mission is a little different, so they have to parrot everyone else. TV or one phone.
 - **Tweakin**. Everyone reads the same case file, except one file has two details changed and nobody knows whose. TV or one phone.
 - **Secret Agenda**. A family decision with four choices; everyone has a hidden goal. Secret first pick, debate, final vote. TV.

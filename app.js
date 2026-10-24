@@ -60,7 +60,7 @@ const PACK_ORDER=Object.keys(PACKS);
 const GAMES={
   flaugin:{name:"Flaugin",min:3,local:true,seg:"Flaugers",timer:120,timerLabel:"Two-minute talk timer",
     sub:{local:"Everyone shares one phone and takes turns peeking.",host:"Pick a pack, then open a room. Everyone joins on their own phone."},
-    rules:["Flaugin’ is said FLAW-jin, and the player doing it is the Flauger (FLAW-jer). It’s Memphis slang for lying or fronting.","Everyone looks at their secret card. The Flauger’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught Flauger gets one guess at the word to steal the round.","Optional Clown: knows the word but wants to get voted out. Vote out the Clown and the Clown gets +3, and the Flauger gets away with +2."]},
+    rules:["Flaugin’ is said FLAW-jin, and the player doing it is the Flauger (FLAW-jer). It’s Memphis slang for lying or fronting.","Everyone looks at their secret card. The Flauger’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught Flauger gets one guess at the word to steal the round.","Optional Troll: knows the word but wants to get voted out. Vote out the Troll and the Troll gets +3, and the Flauger gets away with +2."]},
   copycat:{name:"Parrot",min:3,local:true,seg:"Parrots",timer:90,timerLabel:"90-second debate timer",
     sub:{local:"Everyone shares one phone and peeks at their mission.",host:"Open a room. Everyone gets their mission on their own phone."},
     rules:["Everyone gets a secret mission. The Parrot’s mission is a little different, and they know it, so they have to parrot everyone else.","The TV shows a debate topic. Talk it out while you secretly complete your mission.","Vote for the player you think had the odd mission.","Catch the Parrot: +2 for every correct vote. Parrot escapes: +4."]},
@@ -303,7 +303,7 @@ function cardFront(c){
     if(c.twoFibs)h+=" There’s another Flauger too.";
     f.append(el("span",{class:"label",text:"You’re the"}),el("span",{class:"word",text:"Flauger"}),el("span",{class:"hint",text:h}));
   }else if(c.isClown){
-    f.append(el("span",{class:"label",text:"You’re the Clown 🤡"}),el("span",{class:"word",text:c.word}),el("span",{class:"hint",text:"You know the word, but you WANT to get voted out. Act a little sus!"}));
+    f.append(el("span",{class:"label",text:"You’re the Troll 🧌"}),el("span",{class:"word",text:c.word}),el("span",{class:"hint",text:"You know the word, but you WANT to get voted out. Act a little sus!"}));
   }else f.append(el("span",{class:"label",text:"Secret word"}),el("span",{class:"word",text:c.word}),el("span",{class:"hint",text:c.pack?"Pack: "+c.pack:""}));
   return {front:f,odd:!!c.isFib,tall:false,clown:!!c.isClown};
 }
@@ -334,7 +334,7 @@ function award(sc,outcome,ids,fibIds,votedId){
   else ids.forEach(k=>{if(!fibIds.includes(k))sc[k]=(sc[k]||0)+1});
 }
 function verdictText(outcome,fibText,votedName){
-  if(outcome==="clowned")return ["Clowned!","lose","You voted out "+votedName+", the Clown. That's exactly what they wanted."];
+  if(outcome==="clowned")return ["Trolled!","lose","You voted out "+votedName+", the Troll. That's exactly what they wanted."];
   return outcome==="escaped"?[fibText+" got away!","lose","You voted out "+votedName+", who knew the word."]:
     outcome==="stole"?[votedName+" guessed it!","lose","Caught, but the Flauger still figured out the word."]:
     ["The family wins!","win","Flauger caught and the word stayed safe."];
@@ -502,7 +502,7 @@ function renderCfg(){
   }
   if(g==="flaugin"){
     const few=mode==="local"&&players.length<4;
-    box.append(segRow("Clown role",[[false,"Off"],[true,"On",few]],few?false:!!c.clown,set("clown"),"The Clown secretly knows the word but wins by getting voted out. Needs 4 or more players."+(few?" Add more players to turn it on.":"")));
+    box.append(segRow("Troll role",[[false,"Off"],[true,"On",few]],few?false:!!c.clown,set("clown"),"The Troll secretly knows the word but wins by getting voted out. Needs 4 or more players."+(few?" Add more players to turn it on.":"")));
   }
   if(g==="glitch")box.append(segRow("Details changed",[[1,"1 (hard)"],[2,"2"],[3,"3 (easy)"]],c.details,set("details")));
   if(g==="rules"){
@@ -619,9 +619,9 @@ function finishLocal(outcome){
   award(scores,outcome,players,fibNames,players[game.voted]);store.set("scores",scores);
   const [t,cls,line]=verdictText(outcome,fibText,players[game.voted]);
   $("resTitle").className="verdict "+cls;$("resTitle").textContent=t;
-  const l=$("resLine");l.textContent=line+" The word was ";l.append(el("b",{text:game.word}),document.createTextNode(". "+(game.fibIdx.length>1?"The Flaugers: ":"The Flauger: ")+fibText+"."+(game.clownIdx!=null?" The Clown: "+players[game.clownIdx]+".":"")));
+  const l=$("resLine");l.textContent=line+" The word was ";l.append(el("b",{text:game.word}),document.createTextNode(". "+(game.fibIdx.length>1?"The Flaugers: ":"The Flauger: ")+fibText+"."+(game.clownIdx!=null?" The Troll: "+players[game.clownIdx]+".":"")));
   $("resDetails").textContent="";
-  $("resNote").textContent="Flauger escapes: +2. Flauger caught but guesses the word: +1. Flauger caught and misses: +1 to everyone else."+(game.clownIdx!=null?" Clown voted out: +3 to the Clown, +2 to the Flauger.":"");
+  $("resNote").textContent="Flauger escapes: +2. Flauger caught but guesses the word: +1. Flauger caught and misses: +1 to everyone else."+(game.clownIdx!=null?" Troll voted out: +3 to the Troll, +2 to the Flauger.":"");
   renderScoreTable($("scoreBody"),players.map(n=>[n,scores[n]||0]),true);show("vResult");drumThen(outcome==="caught",$("resTitle"),outcome==="stole");
 }
 function finishLocalOdd(v){
@@ -993,7 +993,7 @@ function renderHostFlaugin(main,side){
   if(H.phase==="clues"){
     main.append(el("p",{class:"big-msg",text:"One word each, in this order."}));
     main.append(el("div",{class:"panel"},el("h3",{text:"Speaking order"}),orderList()));
-    if(H.hasClown)main.append(el("p",{class:"sub",text:"🤡 There's a Clown this round. Careful who you vote out!"}));
+    if(H.hasClown)main.append(el("p",{class:"sub",text:"🧌 There's a Troll this round. Careful who you vote out!"}));
     main.append(el("button",{class:"btn-big",text:"Time to vote",onclick:()=>{H.voteRound++;H.votes={};H.endsAt=0;setPhase("vote")}}));
     add(side,clockPanel());
     if(H.hint)side.append(el("div",{class:"panel"},el("h3",{text:"Pack"}),el("p",{style:"margin:0;font-size:1.2rem;font-weight:800",text:PACKS[H.packId].name})));
@@ -1010,8 +1010,8 @@ function renderHostFlaugin(main,side){
   if(H.phase==="result"){
     const fibNames=H.fib.map(nameOf);const [t,cls,line]=verdictText(H.outcome,fibNames.join(" and "),nameOf(H.voted));
     main.append(el("p",{class:"verdict "+cls,text:t}));
-    const l=el("p",{class:"reveal-line",text:line+" The word was "});l.append(el("b",{text:H.word}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."+(H.clown?" The Clown: "+nameOf(H.clown)+".":"")));main.append(l);
-    const sb2=scoreboard();sb2.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Flauger escapes: +2. Caught but guesses the word: +1. Caught and misses: +1 to everyone else."+(H.clown?" Clown voted out: +3 to the Clown, +2 to the Flauger.":"")}));main.append(sb2);
+    const l=el("p",{class:"reveal-line",text:line+" The word was "});l.append(el("b",{text:H.word}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."+(H.clown?" The Troll: "+nameOf(H.clown)+".":"")));main.append(l);
+    const sb2=scoreboard();sb2.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Flauger escapes: +2. Caught but guesses the word: +1. Caught and misses: +1 to everyone else."+(H.clown?" Troll voted out: +3 to the Troll, +2 to the Flauger.":"")}));main.append(sb2);
     resultFooter(main);
     side.append(el("div",{class:"panel"},el("h3",{text:"The votes"}),tallyBars(true)),joinCard());return;
   }
@@ -1141,7 +1141,7 @@ function tallyBars(markOdd,oddList){
   const odd=oddList||(H.game==="flaugin"?H.fib:[]);
   const t=el("div",{class:"tally"});const c=H.tally||tally();const max=Math.max(1,...Object.values(c));
   const tag=H.game==="flaugin"?" (flaugin’)":H.game==="copycat"?" (Parrot)":" (tweakin’)";
-  Object.keys(c).sort((a,b)=>c[b]-c[a]).forEach(k=>t.append(el("div",{class:"bar"},el("span",{text:nameOf(k)+(markOdd&&odd.includes(k)?tag:markOdd&&H.game==="flaugin"&&H.clown===k?" (Clown)":"")}),el("i",{style:"width:"+(c[k]/max*100)+"%"}),el("b",{text:String(c[k])}))));
+  Object.keys(c).sort((a,b)=>c[b]-c[a]).forEach(k=>t.append(el("div",{class:"bar"},el("span",{text:nameOf(k)+(markOdd&&odd.includes(k)?tag:markOdd&&H.game==="flaugin"&&H.clown===k?" (Troll)":"")}),el("i",{style:"width:"+(c[k]/max*100)+"%"}),el("b",{text:String(c[k])}))));
   return t;
 }
 let closeArmed=0;
@@ -1331,7 +1331,7 @@ function renderPlayerInner(){
     const g=el("div",{class:"vote-grid"});
     s.roster.filter(r=>r.pid!==P.pid).forEach(r=>g.append(el("button",{type:"button",text:r.name,"aria-pressed":String(mine===r.pid),onclick:()=>{P.vote={r:s.voteRound,target:r.pid};sendVote();FX.play("vote");FX.vibrate(20);renderPlayer()}})));
     v.append(el("div",{class:"panel"},g));
-    if(P.card&&P.card.isClown)v.append(el("p",{class:"status on-felt",text:"You’re the Clown. You want them to vote for YOU!"}));
+    if(P.card&&P.card.isClown)v.append(el("p",{class:"status on-felt",text:"You’re the Troll. You want them to vote for YOU!"}));
     if(P.card&&(P.card.isFib||P.card.odd))v.append(el("p",{class:"status on-felt",text:s.game==="flaugin"?"You’re the Flauger. Vote for someone else to keep your cover.":"You’re the Parrot. Vote for someone else to keep your cover."}));
     return;
   }
@@ -1357,7 +1357,7 @@ function renderPlayerInner(){
       const amFib=fibIds.includes(P.pid);
       const scored=phoneScored(s);
       v.append(el("p",{class:"verdict "+(scored?"win":"lose"),text:scored?"You scored!":t}));
-      const l=el("p",{class:"reveal-line",text:"The word was "});l.append(el("b",{text:s.word||"?"}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."+(s.clown?" The Clown: "+rosterName(s,s.clown)+".":"")));
+      const l=el("p",{class:"reveal-line",text:"The word was "});l.append(el("b",{text:s.word||"?"}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."+(s.clown?" The Troll: "+rosterName(s,s.clown)+".":"")));
       v.append(l,myScore(s),el("p",{class:"sub",text:"The next round starts from the big screen."}));
       return;
     }

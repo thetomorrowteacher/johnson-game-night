@@ -531,7 +531,7 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 .turn-log li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:var(--soft);font-weight:700}
 .turn-log li.k-got b{color:var(--win)}.turn-log li.k-buzz b{color:var(--berry)}.turn-log li.k-skip b{color:var(--muted)}
 
-/* ---------- Das a Wibe (Wavelength-style) ---------- */
+/* ---------- Vibe Check (Wavelength-style) ---------- */
 .wave-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
 .wave-dial{width:min(640px,100%);height:auto;display:block;filter:drop-shadow(0 8px 18px rgba(0,0,0,.4))}
 .wave-ends{display:flex;justify-content:space-between;width:min(640px,100%);font-family:var(--display);font-size:clamp(1rem,3.4vw,1.6rem);color:var(--sky);gap:10px}
@@ -547,6 +547,27 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
   @keyframes wedgeIn{from{transform:scale(.2);opacity:0}to{transform:none;opacity:1}}
   @keyframes needleIn{from{opacity:0;stroke-dasharray:0 400}to{opacity:1;stroke-dasharray:400 0}}
 }
+
+/* ---------- The Opps (Mafia-style) ---------- */
+.opp-role{border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:6px;text-align:center;color:#fffaee;box-shadow:0 6px 0 rgba(0,0,0,.35)}
+.opp-role small{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;font-weight:800;opacity:.85}
+.opp-role b{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,9vw,3.2rem);line-height:1}
+.opp-role p{margin:0;font-weight:600}
+.r-opp{background:linear-gradient(135deg,#8e1510,#c8211a)}
+.r-mama{background:linear-gradient(135deg,#7a4a12,#d8941c)}
+.r-nosy{background:linear-gradient(135deg,#1c4b8c,#3b7dd8)}
+.r-fam{background:linear-gradient(135deg,#1d5a26,#2f9a2b)}
+.opp-team{background:rgba(0,0,0,.25);border-radius:12px;padding:8px}
+.opp-checks{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 12px}
+.opp-hide{display:flex;flex-direction:column;gap:8px}
+.opp-people{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.opp-people li{display:flex;justify-content:space-between;gap:6px;padding:8px 10px;border-radius:10px;background:var(--soft);font-weight:700}
+.opp-people li small{color:var(--win);font-weight:800}
+.opp-people li.out{opacity:.5;text-decoration:line-through}
+.opp-people li.out small{color:var(--berry)}
+.night-meter{display:flex;align-items:baseline;gap:12px;color:var(--sky)}
+.night-meter b{font-family:var(--display);font-size:clamp(3rem,10vw,6rem);line-height:1}
+.night-meter span{font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -654,10 +675,21 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
           <span class="art-tag">Read the room</span>
         </div>
         <div class="game-body">
-          <h3 class="game-name">Das a <span>Wibe</span></h3>
-          <p class="define"><i>Das a wibe</i> <span class="say">say it: dahz-uh-<b>WIBE</b></span> Bahamian for “that’s a vibe.”</p>
+          <h3 class="game-name">Vibe <span>Check</span></h3>
           <p class="game-desc">One player sees a secret spot on a dial, like Cold to Hot, and gives a single clue. Everyone slides their guess on their phone, then the TV spins the reveal. 3 to 30 players.</p>
           <div class="row"><button data-host="wave">Host on the TV</button></div>
+        </div>
+      </article>
+          <article class="game-tile" data-game="mafia">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-mafia.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">Somebody in this house is an Opp</span>
+        </div>
+        <div class="game-body">
+          <h3 class="game-name">Man <span>Gone</span></h3>
+          <p class="define"><i>Bush crack, man gone</i> Bahamian for “when trouble starts, run.”</p>
+          <p class="game-desc">Secret roles on every phone. At night the Opps snatch somebody, Big Mama keeps someone safe, and the Nosy Neighbor peeks in a window. By day, talk it out and vote. 5 to 30 players.</p>
+          <div class="row"><button data-host="mafia">Host on the TV</button></div>
         </div>
       </article>
     </div>
@@ -833,10 +865,11 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="fx.js?v=202610241919"></script>
-<script src="content.js?v=202610241919"></script>
-<script src="games/taboo.js?v=202610241919"></script>
-<script src="games/wave.js?v=202610241919"></script>
-<script src="app.js?v=202610241919"></script>
+<script src="fx.js?v=202610241924"></script>
+<script src="content.js?v=202610241924"></script>
+<script src="games/taboo.js?v=202610241924"></script>
+<script src="games/wave.js?v=202610241924"></script>
+<script src="games/mafia.js?v=202610241924"></script>
+<script src="app.js?v=202610241924"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Das a Wibe (working name; id "wave"): Wavelength-style party game.
+/* Vibe Check (id "wave"): Wavelength-style party game.
    Each round one player is the Psychic. Their phone shows a secret spot on a scale between two extremes
    (Cold ... Hot). They give a one-line clue, everyone else slides their guess on their phone, and the TV reveals
    the dial. Closer guesses score more. */
@@ -141,7 +141,7 @@ function renderHost(main,side){
   }
   if(h.phase==="result"){
     const rows=h.roster.map(r=>[r.pid,h.scores[r.pid]||0]).sort((a,b)=>b[1]-a[1]);
-    main.append(el("p",{class:"verdict win",text:"That's a wibe!"}),el("p",{class:"reveal-line",text:"Everyone's been the Psychic. "+n(rows[0][0])+" leads the night."}));
+    main.append(el("p",{class:"verdict win",text:"Vibe checked!"}),el("p",{class:"reveal-line",text:"Everyone's been the Psychic. "+n(rows[0][0])+" leads the night."}));
     const sb=K.scoreboard();sb.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Bullseye: +4. Close: +3. In the zone: +2. The Psychic gets the average of everyone's points."}));main.append(sb);
     K.resultFooter(main);side.append(K.joinCard());
   }
@@ -151,7 +151,7 @@ function renderHost(main,side){
 let myVal=null,myRound=null;
 function renderPlayer(v,s){
   const x=s.ext,el=K.el,P=K.P;if(!x)return;const rn=pid=>K.rosterName(s,pid);
-  if(s.phase==="result"){v.append(el("p",{class:"verdict win",text:"That's a wibe!"}),K.myScore(s));return}
+  if(s.phase==="result"){v.append(el("p",{class:"verdict win",text:"Vibe checked!"}),K.myScore(s));return}
   const card=K.card();
   if(!card){if(K.cardErr())v.append(el("div",{class:"panel"},el("p",{class:"status err",text:K.cardErr()}),el("button",{class:"btn-felt",text:"Try again",onclick:K.retryCard})));else v.append(el("p",{class:"status on-felt",text:"Getting your card…"}));return}
   const spec=card.spec;const me=card.role==="psychic";
@@ -189,9 +189,9 @@ function renderPlayer(v,s){
 
 window.GN_PLUGINS=window.GN_PLUGINS||{};
 window.GN_PLUGINS[ID]={
-  config:{name:"Das a Wibe",min:3,local:false,seg:null,timer:0,timerLabel:"",
+  config:{name:"Vibe Check",min:3,local:false,seg:null,timer:0,timerLabel:"",
     sub:{host:"Open a room. Everyone guesses on their own phone."},
-    rules:["Das a Wibe is Bahamian for “that's a vibe.”","Each round one player is the Psychic. Their phone shows a secret spot on a scale, like Cold to Hot.","The Psychic gives one clue that points to the spot (“a cup of cocoa”).","Everyone else slides their guess on their phone and locks it in. The TV reveals the dial.","Bullseye: +4. Close: +3. In the zone: +2. The Psychic gets the average of everyone's points."]},
+    rules:["Each round one player is the Psychic. Their phone shows a secret spot on a scale, like Cold to Hot.","The Psychic gives one clue that points to the spot (“a cup of cocoa”).","Everyone else slides their guess on their phone and locks it in. The TV reveals the dial.","Bullseye: +4. Close: +3. In the zone: +2. The Psychic gets the average of everyone's points."]},
   defaults:{laps:1,clue:"type"},
   startPhase:"clue",cardPhases:["clue","guess","reveal"],
   init(core){K=core},
@@ -199,10 +199,10 @@ window.GN_PLUGINS[ID]={
   scene(phase){
     const x=K&&K.H?pub():(K&&K.P&&K.P.state&&K.P.state.ext);if(!x)return null;
     const rn=pid=>K.H?K.nameOf(pid):K.rosterName(K.P.state,pid);
-    if(phase==="clue")return [rn(x.psychic)+" is the Psychic","Das a Wibe"];
+    if(phase==="clue")return [rn(x.psychic)+" is the Psychic","Vibe Check"];
     if(phase==="guess")return ["Guess!","Slide and lock it in"];
-    if(phase==="reveal")return ["The reveal","Das a Wibe"];
-    if(phase==="result")return ["Final scores","Das a Wibe"];
+    if(phase==="reveal")return ["The reveal","Vibe Check"];
+    if(phase==="result")return ["Final scores","Vibe Check"];
     return null;
   },
   music(ph){return ph==="guess"?["tense",0.13]:ph==="reveal"||ph==="result"?["party",0.3]:["lobby",0.25]}

@@ -611,6 +611,32 @@ function myScore(s){
   new MutationObserver(q).observe(document.body,{attributes:true,attributeFilter:["class"]});
   q();
 })();
+
+/* ---------- full-screen toggle ---------- */
+(function(){
+  const btn=$("fsBtn");if(!btn)return;
+  const root=document.documentElement;
+  const canFs=!!(root.requestFullscreen||root.webkitRequestFullscreen);
+  const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches)||navigator.standalone;
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  if(standalone)return;                       // already running full screen from the home screen
+  if(!canFs&&!isIOS)return;                   // nothing we can do in this browser
+  btn.hidden=false;
+  const current=()=>document.fullscreenElement||document.webkitFullscreenElement;
+  function sync(){const on=!!current();document.body.classList.toggle("is-fs",on);btn.setAttribute("aria-label",on?"Exit full screen":"Full screen");btn.title=on?"Exit full screen (F)":"Full screen (F)";btn.querySelector(".fs-label").textContent=on?"Exit full screen":"Full screen"}
+  function tip(msg){document.querySelectorAll(".fs-tip").forEach(n=>n.remove());const t=el("div",{class:"fs-tip",role:"status",text:msg});document.body.append(t);setTimeout(()=>t.remove(),6000)}
+  async function toggle(){
+    if(!canFs){tip("On iPhone, tap Share, then Add to Home Screen. Opening Game Night from the home screen runs it full screen.");return}
+    try{
+      if(current()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
+      else{const req=root.requestFullscreen||root.webkitRequestFullscreen;await req.call(root,{navigationUI:"hide"});keepAwake()}
+    }catch(e){tip("This browser blocked full screen. Try your browser's own full-screen option.")}
+  }
+  btn.addEventListener("click",toggle);
+  document.addEventListener("fullscreenchange",sync);document.addEventListener("webkitfullscreenchange",sync);
+  document.addEventListener("keydown",e=>{if((e.key==="f"||e.key==="F")&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const t=e.target;if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable))return;e.preventDefault();toggle()}});
+  sync();
+})();
 /* ---------- boot ---------- */
 const qs=new URLSearchParams(location.search);
 const pinIn=(qs.get("pin")||location.hash.replace("#","")||"").toUpperCase().replace(/[^A-Z]/g,"");

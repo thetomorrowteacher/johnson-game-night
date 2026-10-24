@@ -6,6 +6,12 @@
 <title>Johnson Family Game Night</title>
 <meta name="description" content="Johnson Family Game Night: party games on the TV, played on everyone’s phones.">
 <meta name="theme-color" content="#123d1d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Game Night">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23123d1d'/%3E%3Ctext x='32' y='46' font-size='40' text-anchor='middle' font-family='Arial Black' fill='%23f6c21c'%3EG%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,13 +231,22 @@ body.at-home header.top .logo{visibility:hidden}
   background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(21,19,14,.55) 100%),linear-gradient(90deg,rgba(200,33,26,.18),transparent 30%,transparent 70%,rgba(47,154,43,.18))}
 .game-art .art-tag{position:absolute;left:14px;bottom:12px;z-index:1;font-family:var(--display);font-size:clamp(.95rem,3.4vw,1.25rem);line-height:1.1;color:var(--sky);text-shadow:2px 2px 0 var(--berry),0 2px 10px rgba(0,0,0,.6);transform:translate3d(var(--tx,0px),var(--ty,0px),0);transition:transform .25s ease-out}
 @media (prefers-reduced-motion:reduce){.parallax-img,.game-art .art-tag{transition:none}}
+
+/* Full-screen toggle */
+.fs-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:.8rem;background:rgba(255,255,255,.1);color:var(--on-bg);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.fs-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.fs-btn .fs-off{display:none}
+.is-fs .fs-btn .fs-on{display:none}
+.is-fs .fs-btn .fs-off{display:block}
+@media (max-width:520px){.fs-btn .fs-label{display:none}.fs-btn{padding:8px}}
+.fs-tip{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(420px,calc(100% - 32px));background:var(--card);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:.9rem;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:20}
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
   <header class="top">
     <button class="logo" id="homeLink" aria-label="Game Night home"><img src="logo.png" alt="" width="84" height="52"><span class="logo-text">Game <span>Night</span></span></button>
-    <span class="row" style="gap:12px"><span class="conn" id="conn" hidden><i></i><span>Live</span></span><span class="round-tag" id="roundTag"></span></span>
+    <span class="row" style="gap:12px"><span class="conn" id="conn" hidden><i></i><span>Live</span></span><span class="round-tag" id="roundTag"></span><button class="fs-btn" id="fsBtn" type="button" aria-label="Full screen" title="Full screen (F)" hidden><svg class="fs-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg class="fs-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span class="fs-label">Full screen</span></button></span>
   </header>
 
   <!-- HOME: Game Night hub -->

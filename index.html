@@ -598,6 +598,66 @@ button.pc{cursor:pointer;transition:transform .12s ease}
 .bid-grid button{padding:14px 0;font-family:var(--display);font-size:1.4rem}
 .your-turn{color:var(--sky)!important;font-weight:800}
 @media (min-width:900px){body.tv .pc{width:84px;height:120px}body.tv .pc .pr{font-size:1.8rem}body.tv .pc .ps{font-size:2.3rem}body.tv .seat-tag b{font-size:1.15rem}}
+
+
+.deck-pile{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:58px;height:84px}
+.deck-pile .pc{position:absolute;inset:0}
+@media (prefers-reduced-motion:no-preference){
+  .deck-pile .fly{animation:1s cubic-bezier(.3,.7,.3,1) both;animation-iteration-count:3}
+  .deck-pile .f-s-bottom{animation-name:flyB}.deck-pile .f-s-top{animation-name:flyT}.deck-pile .f-s-left{animation-name:flyL}.deck-pile .f-s-right{animation-name:flyR}
+  @keyframes flyB{0%{transform:none;opacity:1}100%{transform:translateY(160%) rotate(12deg);opacity:0}}
+  @keyframes flyT{0%{transform:none;opacity:1}100%{transform:translateY(-160%) rotate(-12deg);opacity:0}}
+  @keyframes flyL{0%{transform:none;opacity:1}100%{transform:translateX(-320%) rotate(-30deg);opacity:0}}
+  @keyframes flyR{0%{transform:none;opacity:1}100%{transform:translateX(320%) rotate(30deg);opacity:0}}
+}
+.deck-pile .fly{opacity:0}
+.books{position:absolute;display:flex;align-items:center;gap:0}
+.books i{display:block;width:16px;height:22px;border-radius:3px;margin-left:-10px;background:repeating-linear-gradient(45deg,#c8211a 0 3px,#a01a14 3px 6px);box-shadow:0 1px 0 rgba(0,0,0,.4),inset 0 0 0 1px #fffaee}
+.books i:first-child{margin-left:0}
+.books b{margin-left:6px;color:#fffaee;font-family:var(--display);font-size:.9rem;text-shadow:0 1px 2px #000}
+.books.b-s-bottom{bottom:16%;left:62%}.books.b-s-top{top:16%;left:62%}.books.b-s-left{left:10%;top:66%}.books.b-s-right{right:10%;top:66%}
+/* ---------- animated background + more motion ---------- */
+#bgfx{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+body{background-attachment:fixed}
+button{position:relative;overflow:hidden}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);pointer-events:none;animation:ripple .6s ease-out forwards}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion:no-preference){
+  .btn-big,.btn-felt,.btn-chalk,.btn-ghost,.vote-grid button,.bid-grid button,.seg button,.switcher button{transition:transform .14s ease,box-shadow .14s ease,filter .14s ease}
+  .btn-big:hover:not(:disabled),.btn-felt:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.06)}
+  .btn-big:active:not(:disabled),.btn-felt:active:not(:disabled),.vote-grid button:active,.bid-grid button:active,.seg button:active{transform:scale(.95)}
+  .game-tile.tilt{transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-4px);box-shadow:0 4px 0 var(--felt),0 24px 40px rgba(0,0,0,.35)}
+  .verdict.win{animation:verdictGlow 2.4s ease-in-out infinite}
+  @keyframes verdictGlow{0%,100%{text-shadow:0 0 0 rgba(246,194,28,0)}50%{text-shadow:0 0 24px rgba(246,194,28,.55)}}
+  .panel,.tv-prompt,.team-box,.taboo-card,.opp-role,.wave-clue{transition:transform .25s ease}
+  .hand.deal-in .pc{animation:dealIn .5s cubic-bezier(.2,1.2,.4,1) both}
+  .hand.deal-in .pc:nth-child(2){animation-delay:.04s}.hand.deal-in .pc:nth-child(3){animation-delay:.08s}.hand.deal-in .pc:nth-child(4){animation-delay:.12s}
+  .hand.deal-in .pc:nth-child(5){animation-delay:.16s}.hand.deal-in .pc:nth-child(6){animation-delay:.2s}.hand.deal-in .pc:nth-child(7){animation-delay:.24s}
+  .hand.deal-in .pc:nth-child(8){animation-delay:.28s}.hand.deal-in .pc:nth-child(9){animation-delay:.32s}.hand.deal-in .pc:nth-child(10){animation-delay:.36s}
+  .hand.deal-in .pc:nth-child(n+11){animation-delay:.4s}
+  @keyframes dealIn{0%{opacity:0;transform:translateY(-120px) rotate(-25deg) scale(.6)}100%{opacity:1;transform:none}}
+  .card-in{animation:cardIn .4s cubic-bezier(.2,1.3,.4,1) both}
+  @keyframes cardIn{0%{opacity:0;transform:translateX(60px) rotate(6deg)}100%{opacity:1;transform:none}}
+  .shake-it{animation:shake .45s ease both}
+  .opp-role{animation:flipIn .5s ease-out both}
+  .night-meter b{animation:pulse 2s ease-in-out infinite}
+  .eyebrow{animation:rise .5s ease both}
+  /* transition variants */
+  .trans.v-iris .trans-bars i{display:none}
+  .trans.v-iris .trans-bars::before{content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:var(--sky);box-shadow:0 0 0 30px var(--berry),0 0 0 60px var(--lav);animation:iris .8s cubic-bezier(.7,0,.3,1) both}
+  @keyframes iris{0%{transform:scale(0);opacity:1}55%{transform:scale(90);opacity:1}100%{transform:scale(140);opacity:0}}
+  .trans.v-stripes .trans-bars i{top:auto;left:-20%!important;width:140%;height:34%;transform:translateX(140vw) skewY(-6deg)}
+  .trans.v-stripes .trans-bars i:nth-child(1){top:0}.trans.v-stripes .trans-bars i:nth-child(2){top:33%}.trans.v-stripes .trans-bars i:nth-child(3){top:66%}
+  .trans.go.v-stripes .trans-bars i{animation:tStripe .75s cubic-bezier(.7,0,.3,1) both}
+  .trans.go.v-stripes .trans-bars i:nth-child(2){animation-delay:.06s}.trans.go.v-stripes .trans-bars i:nth-child(3){animation-delay:.12s}
+  @keyframes tStripe{0%{transform:translateX(140vw) skewY(-6deg)}100%{transform:translateX(-140vw) skewY(-6deg)}}
+  .trans.v-curtain .trans-bars i{top:0;height:100%;width:51%;transform:none}
+  .trans.v-curtain .trans-bars i:nth-child(1){left:0;background:var(--berry)}.trans.v-curtain .trans-bars i:nth-child(2){display:none}.trans.v-curtain .trans-bars i:nth-child(3){left:auto;right:0;background:var(--lav)}
+  .trans.go.v-curtain .trans-bars i:nth-child(1){animation:curtainL .85s cubic-bezier(.7,0,.3,1) both}
+  .trans.go.v-curtain .trans-bars i:nth-child(3){animation:curtainR .85s cubic-bezier(.7,0,.3,1) both}
+  @keyframes curtainL{0%{transform:translateX(-100%)}40%,55%{transform:none}100%{transform:translateX(-100%)}}
+  @keyframes curtainR{0%{transform:translateX(100%)}40%,55%{transform:none}100%{transform:translateX(100%)}}
+}
 </style>
 </head>
 <body>
@@ -906,12 +966,13 @@ button.pc{cursor:pointer;transition:transform .12s ease}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="fx.js?v=202610241928"></script>
-<script src="content.js?v=202610241928"></script>
-<script src="games/taboo.js?v=202610241928"></script>
-<script src="games/wave.js?v=202610241928"></script>
-<script src="games/mafia.js?v=202610241928"></script>
-<script src="games/spades.js?v=202610241928"></script>
-<script src="app.js?v=202610241928"></script>
+<script src="bg.js?v=202610241936"></script>
+<script src="fx.js?v=202610241936"></script>
+<script src="content.js?v=202610241936"></script>
+<script src="games/taboo.js?v=202610241936"></script>
+<script src="games/wave.js?v=202610241936"></script>
+<script src="games/mafia.js?v=202610241936"></script>
+<script src="games/spades.js?v=202610241936"></script>
+<script src="app.js?v=202610241936"></script>
 </body>
 </html>

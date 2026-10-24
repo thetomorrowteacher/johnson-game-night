@@ -124,7 +124,7 @@ function onAct(p){
   if(!kind)return;
   if(kind==="got"){x.score[t.team]++;K.addScores({[t.giver]:1});K.FX.play("accept")}
   else if(kind==="skip"){x.score[t.team]-=c.skip?1:0;K.FX.play("swoosh")}
-  else{x.score[t.team]-=c.buzz?1:0;K.FX.play("buzzer");K.FX.vibrate(80)}
+  else{x.score[t.team]-=c.buzz?1:0;K.FX.play("buzzer");K.FX.vibrate(80);const m=document.getElementById("hostMain");if(m){m.classList.remove("shake-it");void m.offsetWidth;m.classList.add("shake-it")}}
   t.log.push({w:card[0],k:kind,by:p.pid});t.idx++;x.last={k:kind,at:Date.now()};
   if(t.idx>=t.deck.length)return endTurn();
   K.broadcast();K.renderHost();
@@ -197,8 +197,10 @@ function renderHost(main,side){
 }
 
 /* ---------- phones ---------- */
+let lastCardKey=null;
 function cardBox(card){
-  return K.el("div",{class:"taboo-card"},K.el("p",{class:"tw",text:card[0]}),K.el("p",{class:"tb-label",text:"Don't say"}),
+  const key=card[0];const fresh=key!==lastCardKey;lastCardKey=key;
+  return K.el("div",{class:"taboo-card"+(fresh?" card-in":"")},K.el("p",{class:"tw",text:card[0]}),K.el("p",{class:"tb-label",text:"Don't say"}),
     K.el("ul",{class:"tb"},...card[1].map(w=>K.el("li",{text:w}))));
 }
 let sentIdx=null,sentRound=null;

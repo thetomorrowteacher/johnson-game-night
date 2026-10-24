@@ -105,7 +105,7 @@ function seatTag(x,s,nameFn,me){
   return el("div",{class:"seat-tag "+TC[TEAM[s]]+(x.turn===s&&!x.pause?" turn":"")+(me?" me":"")},el("b",{text:nameFn(x.seats[s])+(x.dealer===s?" (D)":"")}),
     el("small",{text:(bid==null?"Bid: …":"Bid "+bid)+" · Books "+x.tricks[s]}));
 }
-function table(x,nameFn,mySeat){
+function table(x,nameFn,mySeat,phase){
   const el=K.el;const base=mySeat==null?0:mySeat;const pos=["s-bottom","s-left","s-top","s-right"];
   const t=el("div",{class:"spades-table"});
   const shown=x.pause&&x.last?x.last.trick:x.trick;
@@ -113,6 +113,11 @@ function table(x,nameFn,mySeat){
   const mid=el("div",{class:"trick"});
   for(let k=0;k<4;k++){const s=(base+k)%4;const pl=shown.find(p=>p.seat===s);const slot=el("div",{class:"slot "+pos[k]+(x.pause&&x.last&&x.last.winner===s?" won":"")});if(pl)slot.append(cardEl(pl.card));mid.append(slot)}
   t.append(mid);
+  /* the deck sits in the middle while bidding; cards fly out to each seat */
+  if(phase==="bid"){const dk=el("div",{class:"deck-pile"});for(let i=0;i<5;i++)dk.append(el("div",{class:"pc back",style:`transform:translate(${i*-1.5}px,${i*-1.5}px)`}));
+    ["s-bottom","s-left","s-top","s-right"].forEach((c,i)=>dk.append(el("div",{class:"pc back fly f-"+c,style:`animation-delay:${i*.12}s`})));t.append(dk)}
+  /* books won stack up next to each seat */
+  for(let k=0;k<4;k++){const s=(base+k)%4;if(x.tricks[s]){const bk=el("div",{class:"books b-"+pos[k]});for(let i=0;i<Math.min(x.tricks[s],8);i++)bk.append(el("i"));bk.append(el("b",{text:String(x.tricks[s])}));t.append(bk)}}
   return t;
 }
 
@@ -124,7 +129,7 @@ function renderHost(main,side){
     const who=n(x.seats[x.turn]);
     main.append(el("p",{class:"eyebrow",text:"Hand "+x.handNo+(x.broken?" · spades broken":"")}),
       el("p",{class:"big-msg",text:h.phase==="bid"?"Bidding: "+who+"'s turn":x.pause&&x.last?n(x.seats[x.last.winner])+" takes the book!":who+"'s turn to play"}),
-      table(x,n,null));
+      table(x,n,null,h.phase));
     if(h.phase==="play"){
       const bidA=x.bids[0]+x.bids[2],bidB=x.bids[1]+x.bids[3];
       main.append(el("p",{class:"sub",text:"Team Red bid "+bidA+" (has "+(x.tricks[0]+x.tricks[2])+") · Team Green bid "+bidB+" (has "+(x.tricks[1]+x.tricks[3])+")"}));
@@ -146,7 +151,7 @@ function renderHost(main,side){
 }
 
 /* ---------- phones ---------- */
-let sel=null;
+let sel=null,dealtRound=null;
 function renderPlayer(v,s){
   const x=s.ext,el=K.el,P=K.P;if(!x)return;const rn=pid=>K.rosterName(s,pid);
   const card=K.card();
@@ -155,7 +160,7 @@ function renderPlayer(v,s){
   v.append(el("div",{class:"team-pill "+(me==null?"t-red":TC[TEAM[me]])},el("span",{text:me==null?"Watching":"You're "+TN[TEAM[me]]+" · partner: "+rn(x.seats[(me+2)%4])}),el("b",{text:x.score.A+" – "+x.score.B})));
   if(s.phase==="result"){const won=me!=null&&TEAM[me]===x.winner;v.append(el("p",{class:"verdict "+(won?"win":"lose"),text:won?"You and your partner win!":TN[x.winner]+" wins."}),K.myScore(s));return}
   if(s.phase==="handEnd"){const r=x.handPts;v.append(el("p",{class:"big-msg",text:"Hand "+x.handNo+" done"}),el("p",{class:"sub",text:"Team Red "+(r.A.pts>=0?"+":"")+r.A.pts+" · Team Green "+(r.B.pts>=0?"+":"")+r.B.pts}));return}
-  v.append(table(x,rn,me));
+  v.append(table(x,rn,me,s.phase));
   if(me==null){v.append(el("p",{class:"sub",text:"You're watching this game. Join the next one!"}));return}
   const hand=sortHand(card.hand.filter(c=>!x.played.includes(c)));
   const myTurn=x.turn===me&&!x.pause;
@@ -170,7 +175,7 @@ function renderPlayer(v,s){
   }
   const ok=s.phase==="play"&&myTurn?legal(hand,x.trick,x.broken):[];
   if(!hand.includes(sel))sel=null;
-  const row=el("div",{class:"hand"});
+  const row=el("div",{class:"hand"+(dealtRound!==s.round?" deal-in":"")});if(dealtRound!==s.round){dealtRound=s.round;K.FX.play("deal")}
   hand.forEach(c=>row.append(cardEl(c,{button:true,dim:s.phase==="play"&&myTurn&&!ok.includes(c),sel:sel===c,onclick:()=>{
     if(!(s.phase==="play"&&myTurn&&ok.includes(c))){K.FX.play("reject");return}
     if(sel===c){K.act("play",{card:c});sel=null;K.FX.vibrate(15)}else{sel=c;K.FX.play("tap")}

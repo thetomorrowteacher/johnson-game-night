@@ -21,7 +21,8 @@ const Trans=(function(){
     if(FX.reduce&&!big)return;
     box.querySelector(".trans-card b").textContent=big||"";
     box.querySelector(".trans-card small").textContent=small||"";
-    box.classList.toggle("bare",!big);box.classList.remove("go");void box.offsetWidth;box.classList.add("go");
+    box.classList.toggle("bare",!big);box.classList.remove("go","v-bars","v-iris","v-stripes","v-curtain");void box.offsetWidth;
+    const vs=["v-bars","v-iris","v-stripes","v-curtain"];box.classList.add("go",o.variant||vs[Math.floor(Math.random()*vs.length)]);
     const len=big?(o.long?1900:1500):750;busyUntil=Date.now()+len;
     clearTimeout(t1);t1=setTimeout(()=>box.classList.remove("go"),len+60);
     if(big&&!o.quiet)FX.play("swoosh");
@@ -42,6 +43,15 @@ function sceneFor(game,phase,round){
   return null;
 }
 let booted=false;
+/* Background mood for each moment of a game (see bg.js). */
+function moodFor(game,phase){
+  if(phase==="night")return "night";
+  if(["result","reveal","handEnd","turnEnd"].includes(phase))return "party";
+  if(["vote","final","guess","verdict"].includes(phase))return "tense";
+  if(["lobby","cards","ready","roles","bid","turn","clue","dawn"].includes(phase))return "hype";
+  return "calm";
+}
+function setMood(m){if(window.GN_BG)window.GN_BG.mood(m)}
 function animIn(node){if(!node||FX.reduce)return;node.classList.remove("view-in");void node.offsetWidth;node.classList.add("view-in");clearTimeout(node._animT);node._animT=setTimeout(()=>node.classList.remove("view-in"),1200)}
 /* TV-side sounds: the TV and one-phone games get effects and the announcer; players' phones get quieter effects and vibration. */
 function tvSound(){return mode==="host"||mode==="local"||mode==="home"}
@@ -85,7 +95,8 @@ const store={
 };
 const $=id=>document.getElementById(id);
 const VIEWS=["vHome","vSetup","vPass","vClues","vVote","vGuess","vResult","vHost","vJoin","vPlayer"];
-function show(id){const was=VIEWS.find(v=>!$(v).hidden);if(booted&&was&&was!==id&&!Trans.busy()&&["vHome","vSetup","vJoin","vHost","vPlayer"].includes(id))Trans.play();VIEWS.forEach(v=>{$(v).hidden=v!==id});document.body.classList.toggle("at-home",id==="vHome");window.scrollTo(0,0);if(was!==id&&id!=="vHost"&&id!=="vPlayer")animIn($(id));if(typeof Music!=="undefined")Music.sync()}
+function show(id){const was=VIEWS.find(v=>!$(v).hidden);
+  setMood(id==="vPass"?"hype":id==="vVote"||id==="vGuess"?"tense":id==="vResult"?"party":id==="vHost"&&typeof H!=="undefined"&&H?moodFor(H.game,H.phase):"calm");if(booted&&was&&was!==id&&!Trans.busy()&&["vHome","vSetup","vJoin","vHost","vPlayer"].includes(id))Trans.play();VIEWS.forEach(v=>{$(v).hidden=v!==id});document.body.classList.toggle("at-home",id==="vHome");window.scrollTo(0,0);if(was!==id&&id!=="vHost"&&id!=="vPlayer")animIn($(id));if(typeof Music!=="undefined")Music.sync()}
 function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const k in attrs){const v=attrs[k];if(v==null)continue;if(k==="class")e.className=v;else if(k==="text")e.textContent=v;else if(k.startsWith("on"))e[k]=v;else e.setAttribute(k,v)}kids.forEach(c=>c!=null&&e.append(c));return e}
 function rnd(n){try{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n}catch(e){return Math.floor(Math.random()*n)}}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -812,6 +823,7 @@ function hostWon(){
   return true;
 }
 function phaseFx(p,prev){
+  setMood(moodFor(H.game,p));
   if(p!==prev||p==="cards"||p==="play"){const sc=sceneFor(H.game,p,H.round);if(sc&&!(p==="lobby"&&!prev))Trans.play(sc[0],sc[1],{long:p==="result",quiet:p==="result"})}
   if(p==="cards"){if(!Music.sting("deal"))FX.play("deal");ANN.round(H.round)}
   else if(p==="play"){if(!Music.sting("deal"))FX.play("deal");ANN.round(H.round)}
@@ -1230,6 +1242,7 @@ function phoneScored(s){
   return !!((s.reveal||{}).rp||{})[P.pid];
 }
 function phoneFx(prev,s,inRound){
+  setMood(moodFor(s.game,s.phase));
   if(prev&&(prev.phase!==s.phase||prev.round!==s.round||prev.game!==s.game)){
     const sc=(s.phase!=="lobby"&&!inRound)?null:sceneFor(s.game,s.phase,s.round);
     if(sc)Trans.play(sc[0],sc[1],{long:s.phase==="result",quiet:true});
@@ -1587,6 +1600,23 @@ var Music=(function(){
     if(t.matches(".btn-big,.mode,.join-hero,.switcher button,[data-host],[data-local],.pack,.seg button"))FX.play("tap")},true);
   ANN.setDuck(t=>{window.__gnAnnTalking=t;if(typeof Music!=="undefined")Music.sync()});
   sync();
+})();
+/* ---------- touch ripple on buttons, tilt on game tiles ---------- */
+(function motion(){
+  if(FX.reduce)return;
+  document.addEventListener("pointerdown",e=>{
+    const b=e.target.closest&&e.target.closest("button");if(!b||b.disabled||b.classList.contains("pc"))return;
+    const r=b.getBoundingClientRect();const d=Math.max(r.width,r.height)*2.2;
+    const sp=document.createElement("span");sp.className="ripple";sp.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
+    b.appendChild(sp);setTimeout(()=>sp.remove(),650);
+  },{passive:true});
+  if(!(window.matchMedia&&matchMedia("(hover: hover)").matches))return;
+  document.addEventListener("pointermove",e=>{
+    const t=e.target.closest&&e.target.closest(".game-tile");
+    document.querySelectorAll(".game-tile.tilt").forEach(x=>{if(x!==t){x.classList.remove("tilt");x.style.removeProperty("--rx");x.style.removeProperty("--ry")}});
+    if(!t)return;const r=t.getBoundingClientRect();const px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;
+    t.classList.add("tilt");t.style.setProperty("--rx",(-py*5).toFixed(2)+"deg");t.style.setProperty("--ry",(px*6).toFixed(2)+"deg");
+  },{passive:true});
 })();
 /* ---------- toolkit for games/*.js ---------- */
 const CORE={

@@ -6,6 +6,7 @@
 <title>Johnson Family Game Night</title>
 <meta name="description" content="Johnson Family Game Night: party games on the TV, played on everyone’s phones.">
 <meta name="theme-color" content="#123d1d">
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -305,6 +306,13 @@ body.at-home header.top .logo{visibility:hidden}
 /* Full-screen button: always visible, bigger on the TV */
 .fs-btn{background:var(--sky);color:var(--felt);box-shadow:0 3px 0 var(--felt);font-weight:800}
 body.tv .fs-btn{padding:10px 16px;font-size:.95rem}
+
+/* Big full-screen button on the TV home screen */
+.fs-hero{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 18px;background:transparent;color:var(--on-bg);box-shadow:inset 0 0 0 3px var(--sky);font-size:1.1rem}
+.fs-hero svg{width:24px;height:24px;fill:none;stroke:var(--sky);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.fs-hero small{font-weight:600;color:var(--on-bg-dim);font-size:.85rem}
+.is-fs .fs-hero{display:none}
+@media (hover:none),(max-width:700px){.fs-hero{display:none}}
 </style>
 </head>
 <body>
@@ -321,6 +329,7 @@ body.tv .fs-btn{padding:10px 16px;font-size:.95rem}
       <h1 class="hub-title">Family Game Night</h1>
       <p class="sub">Pick a game for the TV, then everyone joins on their own phone.</p>
     </div>
+    <button class="fs-hero" id="fsHero" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>Go full screen</span><small>or press F</small></button>
     <button class="join-hero" id="goJoin"><b>Join a game</b><span>Got a PIN from the TV? Tap here and type it in.</span></button>
     <h2 class="shelf-label">Tonight's games</h2>
     <div class="shelf">
@@ -539,7 +548,7 @@ body.tv .fs-btn{padding:10px 16px;font-size:.95rem}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="content.js"></script>
-<script src="app.js"></script>
+<script src="content.js?v=202610241424"></script>
+<script src="app.js?v=202610241424"></script>
 </body>
 </html>

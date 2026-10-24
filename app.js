@@ -1154,6 +1154,7 @@ function myScore(s){
     }catch(e){tip("This browser blocked full screen. Use the browser's own full screen: "+(isMac?"press Control + Command + F.":"press F11."))}
   }
   btn.addEventListener("click",toggle);
+  const hero=$("fsHero");if(hero){hero.hidden=false;hero.addEventListener("click",toggle)}
   document.addEventListener("fullscreenchange",sync);document.addEventListener("webkitfullscreenchange",sync);
   document.addEventListener("keydown",e=>{if((e.key==="f"||e.key==="F")&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const t=e.target;if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable))return;e.preventDefault();toggle()}});
   sync();

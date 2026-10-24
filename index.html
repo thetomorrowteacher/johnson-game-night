@@ -711,6 +711,41 @@ button.uc{cursor:pointer;transition:transform .12s ease}
   .uno-p.turn{animation:nowPulse 1.2s ease-in-out infinite}
   .uno-catch{animation:shake .5s ease both}
 }
+
+/* ---------- Locked In (escape room) ---------- */
+.esc-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.esc-locks{display:flex;gap:6px}
+.esc-locks .lk{font-size:1.5rem;opacity:.45;filter:grayscale(1)}
+.esc-locks .lk.now{opacity:1;filter:none}
+.esc-locks .lk.open{opacity:1;filter:none}
+.esc-story{font-size:clamp(1.1rem,2.4vw,1.5rem);margin:0;color:var(--on-bg)}
+.esc-card{background:var(--card);color:var(--ink);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 0 var(--felt),0 16px 34px rgba(0,0,0,.35)}
+.esc-card small{font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--berry)}
+.esc-card b{font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,4.4vw,3rem);line-height:1;color:var(--felt)}
+.esc-card p{margin:0;font-size:clamp(1rem,2.2vw,1.4rem)}
+.esc-card.sm b{font-size:1.6rem}.esc-card.sm p{font-size:1rem}
+.esc-dial{display:flex;gap:10px;justify-content:center;margin-top:8px}
+.esc-dial span{min-width:56px;height:72px;border-radius:12px;background:#15130e;color:var(--sky);font-family:var(--display);font-size:2.4rem;display:grid;place-items:center;box-shadow:inset 0 -6px 0 rgba(255,255,255,.08)}
+.esc-dial.colors span{--cc:#c8211a;background:var(--cc);border-radius:50%;width:64px;height:64px;min-width:0;box-shadow:0 0 0 4px #15130e,0 0 18px var(--cc)}
+.esc-dial.word span{min-width:0;padding:0 18px;letter-spacing:.2em;font-size:2rem}
+.esc-clue{background:linear-gradient(135deg,#15130e,#2a1a0c);border-radius:18px;padding:16px;box-shadow:inset 0 0 0 2px var(--sky)}
+.esc-clue small{font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--sky)}
+.esc-clue p{margin:8px 0 0;font-size:1.25rem;font-weight:700;color:#fffaee}
+.esc-hints p{margin:4px 0;font-weight:700}
+.esc-time .timer{font-size:clamp(3rem,8vw,5.5rem)}
+.esc-entry{min-height:64px;border-radius:14px;background:#15130e;color:var(--sky);font-family:var(--display);font-size:2.2rem;letter-spacing:.3em;display:flex;align-items:center;justify-content:center;gap:10px}
+.esc-entry.colors span{--cc:#555;width:40px;height:40px;border-radius:50%;background:var(--cc)}
+.esc-entry.colors span.empty{background:rgba(255,255,255,.12)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.keypad button{padding:16px 0;font-family:var(--display);font-size:1.6rem}
+.keypad.colors{grid-template-columns:repeat(2,1fr)}
+.keypad.colors button{--cc:#c8211a;background:var(--cc)!important;color:#fffaee!important;font-size:1.2rem}
+.keypad.colors .wide{grid-column:1/-1;background:rgba(255,255,255,.12)!important}
+@media (prefers-reduced-motion:no-preference){
+  .esc-locks .lk.now{animation:pulse 1.4s ease-in-out infinite}
+  .esc-locks .lk.open{animation:pop .5s ease both}
+  .esc-clue{animation:flipIn .5s ease-out both}
+}
 </style>
 </head>
 <body>
@@ -855,6 +890,18 @@ button.uc{cursor:pointer;transition:transform .12s ease}
           <h3 class="game-name">Sta<span>ck</span></h3>
           <p class="game-desc">The cookout card game. Match colors and numbers, stack +2s and +4s until somebody breaks, and drop doubles and triples. The TV holds the piles; your hand stays on your phone. 2 to 10 players.</p>
           <div class="row"><button data-host="uno">Host on the TV</button></div>
+        </div>
+      </article>
+          <article class="game-tile" data-game="escape">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-escape.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">5 locks. 1 clock.</span>
+        </div>
+        <div class="game-body">
+          <h3 class="game-name">Locked <span>In</span></h3>
+          <p class="define"><i>Locked in</i> brain rot for focused. You'll need to be.</p>
+          <p class="game-desc">A family escape room. Every phone gets different secret clues, so you have to talk and put the pieces together to crack 5 locks before time runs out. Three rooms: Big Mama's Kitchen, the Memphis Studio and Nassau Treasure. 2 to 30 players.</p>
+          <div class="row"><button data-host="escape">Host on the TV</button></div>
         </div>
       </article>
     </div>
@@ -1030,14 +1077,15 @@ button.uc{cursor:pointer;transition:transform .12s ease}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="bg.js?v=202610241944"></script>
-<script src="fx.js?v=202610241944"></script>
-<script src="content.js?v=202610241944"></script>
-<script src="games/taboo.js?v=202610241944"></script>
-<script src="games/wave.js?v=202610241944"></script>
-<script src="games/mafia.js?v=202610241944"></script>
-<script src="games/spades.js?v=202610241944"></script>
-<script src="games/stack.js?v=202610241944"></script>
-<script src="app.js?v=202610241944"></script>
+<script src="bg.js?v=202610241953"></script>
+<script src="fx.js?v=202610241953"></script>
+<script src="content.js?v=202610241953"></script>
+<script src="games/taboo.js?v=202610241953"></script>
+<script src="games/wave.js?v=202610241953"></script>
+<script src="games/mafia.js?v=202610241953"></script>
+<script src="games/spades.js?v=202610241953"></script>
+<script src="games/stack.js?v=202610241953"></script>
+<script src="games/locked.js?v=202610241953"></script>
+<script src="app.js?v=202610241953"></script>
 </body>
 </html>

@@ -41,3 +41,17 @@ Game Show Grind plays on the home screen. Cuts from Lofi Gameshow, Spin the Wrec
 - First visit each session plays the Adventures with the Johnsons logo scene (tap or any key skips), then the home screen.
 - Red, gold and green bars sweep between screens, with title cards for each step: round, clues/debate, vote, reveal, and the next game.
 - 5-star rating for each game, on its tile on the home screen, on players' phones after a round, and after one-phone rounds. One rating per device per game; stored in `gamenight_game_ratings`. The best-rated game gets a "Top rated" ribbon and a line under the title.
+
+## Newer games (games/*.js)
+Each newer game is a plugin in `games/` that registers on `window.GN_PLUGINS`; `app.js` hands it a small toolkit (`CORE`).
+- **Talmbout** (`taboo`): Taboo-style. Team Red vs. Team Green; the describer and the other team see the card on their phones; the other team buzzes banned words.
+- **Vibe Check** (`wave`): Wavelength-style. A Psychic sees a secret spot on a dial and gives a clue; everyone slides a guess on their phone.
+- **Man Gone** (`mafia`): Mafia-style, kid friendly. The Opps snatch at night, Big Mama protects, the Nosy Neighbor peeks; day talk and phone votes.
+- **Spades** (`spades`): 4 players, partners across. Big Joker, Little Joker, then the 2 of spades on top; 2 of clubs and 2 of hearts removed. The TV shows the table, deck and books; hands stay on phones.
+- **Stack** (`uno`): Uno-style. The TV shows the draw and play piles; hands stay on phones. Stack +2s and +4s, play doubles and triples, call last card or get caught.
+- **Locked In** (`escape`): team escape room against the clock. Every phone gets different secret clues. Rooms: Big Mama's Kitchen, the Memphis Studio, Nassau Treasure.
+
+The server function source lives in `supabase/functions/gamenight/index.ts` (actions: create, join, touch, deal, dealCards, setCards, card, reveal, ratings, rate).
+
+## Background and motion
+`bg.js` draws the animated background (drifting color lights, floating suits, stars and dice) and changes mood with the game. Screen changes rotate between bar, iris, stripe and curtain transitions. Everything respects reduced-motion settings.

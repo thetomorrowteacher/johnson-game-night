@@ -4,8 +4,9 @@
    Games: Flaugin, Copycat, The Glitch, Secret Agenda, Rulebreakers. */
 (function(){
 "use strict";
-const SB_URL="https://tcyskkvdebqrqpbzkgzn.supabase.co";
-const SB_KEY="sb_publishable_UOiNXEGd-rVTGLmiGGtDjg__Av1HLsz";
+const SB_URL="https://hyxiagexyptzvetqjmnj.supabase.co";   // PFLX Applications project (gamenight_* tables)
+const SB_KEY="sb_publishable_BtN0DbvxdMjshCpuc7mS_g_izfzJJ5j";
+const SRV="pflx";   // rooms and seats saved before the server move are ignored
 const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}}):null;
 const SITE=location.origin+location.pathname.replace(/index\.html$/,"");
 const C=window.GN_CONTENT||{};
@@ -87,7 +88,7 @@ async function keepAwake(){try{if(navigator.wakeLock&&!wakeLock){wakeLock=await 
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&(mode==="host"||mode==="player"))keepAwake()});
 async function api(body){
   let r,j;
-  try{r=await fetch(SB_URL+"/functions/v1/flaudjer",{method:"POST",headers:{"content-type":"application/json",apikey:SB_KEY},body:JSON.stringify(body)})}
+  try{r=await fetch(SB_URL+"/functions/v1/gamenight",{method:"POST",headers:{"content-type":"application/json",apikey:SB_KEY},body:JSON.stringify(body)})}
   catch(e){throw new Error("Can't reach the game server. Check your Wi-Fi.")}
   try{j=await r.json()}catch(e){j={}}
   if(!r.ok||j.error)throw new Error(j.error||"Something went wrong. Try again.");
@@ -95,6 +96,10 @@ async function api(body){
 }
 
 /* ---------- settings ---------- */
+(function forgetOldServer(){try{
+  const h=store.get("host",null);if(h&&h.srv!==SRV)store.del("host");
+  Object.keys(localStorage).forEach(k=>{if(k.indexOf("flaudjer:me:")===0){const v=JSON.parse(localStorage.getItem(k)||"null");if(!v||v.srv!==SRV)localStorage.removeItem(k)}});
+}catch(e){}})();
 const FAMILY=["Ennis","Coral","Essence","Eden"];
 let players=store.get("players",FAMILY);
 /* Anyone still on the old example names gets the family's names instead. */
@@ -498,7 +503,7 @@ function channelFor(code,key){
   return sb.channel("flaudjer-"+code.toLowerCase(),{config:{broadcast:{self:false},presence:{key}}});
 }
 function leaveLive(){
-  clearInterval(hostBeat);clearInterval(hostTick);clearInterval(pTimer);
+  clearInterval(hostBeat);clearInterval(hostTick);clearInterval(hostKeep);clearInterval(pTimer);
   if(ch){try{sb.removeChannel(ch)}catch(e){}ch=null}
   H=null;P=null;$("conn").hidden=true;
 }
@@ -507,13 +512,13 @@ function setConn(on){$("conn").hidden=false;$("conn").classList.toggle("on",on);
 /* =====================================================================
    HOST / BIG SCREEN
    ===================================================================== */
-let H=null,hostBeat=0,hostTick=0;
+let H=null,hostBeat=0,hostTick=0,hostKeep=0;
 async function openRoom(){
   if(!sb){$("fibNote").className="status err";$("fibNote").textContent="The game server didn't load. Refresh and try again.";return}
   $("startBtn").disabled=true;$("startBtn").textContent="Opening a room…";
   try{
     const r=await api({action:"create"});
-    const h={code:r.code,hostToken:r.hostToken,at:Date.now(),scores:{},names:{},round:0};
+    const h={code:r.code,hostToken:r.hostToken,at:Date.now(),scores:{},names:{},round:0,srv:SRV};
     store.set("host",h);resumeRoom(h);
   }catch(e){$("fibNote").className="status err";$("fibNote").textContent=e.message;$("startBtn").disabled=false;$("startBtn").textContent="Open the room"}
 }
@@ -552,6 +557,7 @@ function resumeRoom(h){
       else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED")setConn(false);
     });
   clearInterval(hostBeat);hostBeat=setInterval(broadcast,4000);
+  clearInterval(hostKeep);hostKeep=setInterval(()=>{if(H)api({action:"touch",code:H.code,hostToken:H.hostToken}).catch(()=>{})},10*60*1000);
   clearInterval(hostTick);hostTick=setInterval(()=>{if(H&&(H.phase==="clues"||H.phase==="talk")&&H.endsAt){
     const left=(H.endsAt-Date.now())/1000;const t=$("hostTimer");
     if(t){t.textContent=left>0?fmt(left):"Time!";t.classList.toggle("hurry",left>0&&left<=10)}
@@ -562,7 +568,7 @@ function resumeRoom(h){
   }},250);
   mode="host";setTag(GAMES[H.game].name+" · Room "+H.code);show("vHost");renderHost();
 }
-function saveHost(){store.set("host",{code:H.code,hostToken:H.hostToken,at:Date.now(),scores:H.scores,names:H.names,round:H.round})}
+function saveHost(){store.set("host",{code:H.code,hostToken:H.hostToken,at:Date.now(),scores:H.scores,names:H.names,round:H.round,srv:SRV})}
 function phones(){
   if(!ch)return [];
   const seen={};const out=[];
@@ -958,7 +964,7 @@ $("joinForm").onsubmit=async e=>{
   $("joinBtn").disabled=true;st.className="status";st.textContent="Joining room "+pin+"…";
   let me=store.get("me:"+pin,null);
   try{
-    if(!me||me.name!==name){const r=await api({action:"join",code:pin,name});me={pid:r.playerId,token:r.token,name:r.name,at:Date.now()};store.set("me:"+pin,me)}
+    if(!me||me.name!==name){const r=await api({action:"join",code:pin,name});me={pid:r.playerId,token:r.token,name:r.name,at:Date.now(),srv:SRV};store.set("me:"+pin,me)}
   }catch(err){$("joinBtn").disabled=false;st.className="status err";st.textContent=err.message;return}
   store.set("myName",name);
   startPlayer(pin,me);

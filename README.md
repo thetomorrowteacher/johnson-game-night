@@ -15,9 +15,9 @@ Content for every game lives in `content.js`.
 ## How it works
 
 - `index.html` + `app.js`: static site, served by GitHub Pages.
-- Live rooms use Supabase Realtime (broadcast + presence).
-- Secret cards come from the `flaudjer` Supabase edge function, so each phone only receives its own card. The word and Flaugin list never reach other phones until the reveal.
-- Data lives in `flaudjer_rooms` / `flaudjer_players` (RLS on, no browser access). Rooms older than a day are cleaned up automatically.
+- Live rooms use Supabase Realtime (broadcast + presence) on the PFLX Applications project.
+- Secret cards come from the `gamenight` Supabase edge function, so each phone only receives its own card. The word and Flaugin list never reach other phones until the reveal.
+- Data lives in `gamenight_rooms` / `gamenight_players` (RLS on, no browser access). Rooms older than a day are cleaned up automatically.
 
 ## Sound
 

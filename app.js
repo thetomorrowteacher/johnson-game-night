@@ -49,7 +49,7 @@ const store={
 };
 const $=id=>document.getElementById(id);
 const VIEWS=["vHome","vSetup","vPass","vClues","vVote","vGuess","vResult","vHost","vJoin","vPlayer"];
-function show(id){VIEWS.forEach(v=>{$(v).hidden=v!==id});document.body.classList.toggle("at-home",id==="vHome");window.scrollTo(0,0)}
+function show(id){VIEWS.forEach(v=>{$(v).hidden=v!==id});document.body.classList.toggle("at-home",id==="vHome");window.scrollTo(0,0);if(typeof Music!=="undefined")Music.sync()}
 function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const k in attrs){const v=attrs[k];if(v==null)continue;if(k==="class")e.className=v;else if(k==="text")e.textContent=v;else if(k.startsWith("on"))e[k]=v;else e.setAttribute(k,v)}kids.forEach(c=>c!=null&&e.append(c));return e}
 function rnd(n){try{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n}catch(e){return Math.floor(Math.random()*n)}}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -544,7 +544,7 @@ function publicState(){
     scores:H.roster.map(r=>[r.pid,H.scores[r.pid]||0])};
 }
 function broadcast(){if(ch&&H)ch.send({type:"broadcast",event:"state",payload:publicState()}).catch(()=>{})}
-function setPhase(p){H.phase=p;H.epoch=Date.now();broadcast();renderHost();saveHost()}
+function setPhase(p){H.phase=p;H.epoch=Date.now();broadcast();renderHost();saveHost();Music.sync()}
 let dealing=false;
 function buildRoster(){
   const seen={};
@@ -1158,6 +1158,45 @@ function myScore(s){
   document.addEventListener("fullscreenchange",sync);document.addEventListener("webkitfullscreenchange",sync);
   document.addEventListener("keydown",e=>{if((e.key==="f"||e.key==="F")&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const t=e.target;if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable))return;e.preventDefault();toggle()}});
   sync();
+})();
+
+/* ---------- theme music ("Game Show Grind") ----------
+   Plays on the TV and in one-phone games, never on players' phones.
+   Full volume on menus, lobby and reveals; drops low while everyone is talking or voting. */
+var Music=(function(){
+  const btn=$("musicBtn");if(!btn)return {sync(){}};
+  const audio=new Audio("theme.mp3?v=1");audio.loop=true;audio.preload="auto";audio.volume=0;
+  const touchy=window.matchMedia&&matchMedia("(hover: none)").matches;
+  let on=store.get("music",!touchy);       // default on for laptops/TVs, off for phones
+  let target=0,fade=0,unlocked=false;
+  const QUIET=["clues","talk","vote","final","play","guess"];
+  function wanted(){
+    if(!on||mode==="player")return 0;
+    if(mode==="host"&&H&&QUIET.includes(H.phase))return 0.1;
+    if(mode==="local"&&!$("vClues").hidden)return 0.1;
+    return 0.45;
+  }
+  function ramp(){
+    clearInterval(fade);
+    fade=setInterval(()=>{
+      const d=target-audio.volume;
+      if(Math.abs(d)<0.02){audio.volume=target;clearInterval(fade);if(target===0)audio.pause();return}
+      audio.volume=Math.max(0,Math.min(1,audio.volume+Math.sign(d)*0.03));
+    },60);
+  }
+  function sync(){
+    btn.hidden=mode==="player";
+    btn.setAttribute("aria-pressed",String(on));btn.title=on?"Turn music off (M)":"Turn music on (M)";
+    target=unlocked?wanted():0;
+    if(target>0&&audio.paused)audio.play().catch(()=>{});
+    ramp();
+  }
+  function unlock(){if(unlocked)return;unlocked=true;sync()}
+  ["pointerdown","keydown"].forEach(t=>document.addEventListener(t,unlock,{capture:true}));
+  btn.addEventListener("click",()=>{on=!on;store.set("music",on);unlocked=true;sync()});
+  document.addEventListener("keydown",e=>{if((e.key==="m"||e.key==="M")&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const t=e.target;if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"))return;on=!on;store.set("music",on);unlocked=true;sync()}});
+  document.addEventListener("visibilitychange",()=>{if(document.hidden){audio.pause()}else sync()});
+  return {sync};
 })();
 /* ---------- boot ---------- */
 const qs=new URLSearchParams(location.search);

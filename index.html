@@ -313,13 +313,19 @@ body.tv .fs-btn{padding:10px 16px;font-size:.95rem}
 .fs-hero small{font-weight:600;color:var(--on-bg-dim);font-size:.85rem}
 .is-fs .fs-hero{display:none}
 @media (hover:none),(max-width:700px){.fs-hero{display:none}}
+
+/* Theme music toggle */
+.music-btn{background:rgba(255,255,255,.1);color:var(--on-bg);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.music-btn[aria-pressed=true]{background:var(--sky);color:var(--felt);box-shadow:0 3px 0 var(--felt)}
+.music-btn .m-on{display:none}.music-btn[aria-pressed=true] .m-on{display:block}.music-btn[aria-pressed=true] .m-off{display:none}
+header.top>.row{gap:8px}
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
   <header class="top">
     <button class="logo" id="homeLink" aria-label="Game Night home"><img src="logo.png" alt="" width="84" height="52"><span class="logo-text">Game <span>Night</span></span></button>
-    <span class="row" style="gap:12px"><span class="conn" id="conn" hidden><i></i><span>Live</span></span><span class="round-tag" id="roundTag"></span><button class="fs-btn" id="fsBtn" type="button" aria-label="Full screen" title="Full screen (F)" hidden><svg class="fs-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg class="fs-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span class="fs-label">Full screen</span></button></span>
+    <span class="row" style="gap:12px"><span class="conn" id="conn" hidden><i></i><span>Live</span></span><span class="round-tag" id="roundTag"></span><button class="fs-btn music-btn" id="musicBtn" type="button" aria-label="Theme music" title="Theme music (M)" aria-pressed="false"><svg class="m-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><svg class="m-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg><span class="fs-label">Music</span></button><button class="fs-btn" id="fsBtn" type="button" aria-label="Full screen" title="Full screen (F)" hidden><svg class="fs-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg class="fs-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span class="fs-label">Full screen</span></button></span>
   </header>
 
   <!-- HOME: Game Night hub -->
@@ -548,7 +554,7 @@ body.tv .fs-btn{padding:10px 16px;font-size:.95rem}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="content.js?v=202610241424"></script>
-<script src="app.js?v=202610241424"></script>
+<script src="content.js?v=202610241712"></script>
+<script src="app.js?v=202610241712"></script>
 </body>
 </html>

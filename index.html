@@ -530,6 +530,23 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 .turn-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .turn-log li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:var(--soft);font-weight:700}
 .turn-log li.k-got b{color:var(--win)}.turn-log li.k-buzz b{color:var(--berry)}.turn-log li.k-skip b{color:var(--muted)}
+
+/* ---------- Das a Wibe (Wavelength-style) ---------- */
+.wave-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
+.wave-dial{width:min(640px,100%);height:auto;display:block;filter:drop-shadow(0 8px 18px rgba(0,0,0,.4))}
+.wave-ends{display:flex;justify-content:space-between;width:min(640px,100%);font-family:var(--display);font-size:clamp(1rem,3.4vw,1.6rem);color:var(--sky);gap:10px}
+.wave-ends .we-r{text-align:right}
+.wave-clue{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--card);color:var(--felt);border-radius:18px;padding:14px 20px;box-shadow:0 5px 0 var(--felt);text-align:center}
+.wave-clue small{font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--berry)}
+.wave-clue b{font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,6vw,3.6rem);line-height:1.05;overflow-wrap:anywhere}
+.wave-clue.sm b{font-size:1.6rem}
+.wave-range{width:100%;height:44px;accent-color:var(--berry)}
+@media (prefers-reduced-motion:no-preference){
+  .wave-dial .wedge-in{transform-origin:300px 310px;animation:wedgeIn .7s cubic-bezier(.2,1.2,.4,1) both}
+  .wave-dial .needle-in{animation:needleIn .5s ease-out both}
+  @keyframes wedgeIn{from{transform:scale(.2);opacity:0}to{transform:none;opacity:1}}
+  @keyframes needleIn{from{opacity:0;stroke-dasharray:0 400}to{opacity:1;stroke-dasharray:400 0}}
+}
 </style>
 </head>
 <body>
@@ -629,6 +646,18 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
           <p class="define"><i>Talmbout</i> <span class="say">say it: <b>TALM</b>-bout</span> as in “what you talmbout?”</p>
           <p class="game-desc">Team Red vs. Team Green. Describe the word on your phone without saying it or any banned word, while the other team watches your card and hits BUZZ. 4 to 30 players.</p>
           <div class="row"><button data-host="taboo">Host on the TV</button></div>
+        </div>
+      </article>
+          <article class="game-tile" data-game="wave">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-wave.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">Read the room</span>
+        </div>
+        <div class="game-body">
+          <h3 class="game-name">Das a <span>Wibe</span></h3>
+          <p class="define"><i>Das a wibe</i> <span class="say">say it: dahz-uh-<b>WIBE</b></span> Bahamian for “that’s a vibe.”</p>
+          <p class="game-desc">One player sees a secret spot on a dial, like Cold to Hot, and gives a single clue. Everyone slides their guess on their phone, then the TV spins the reveal. 3 to 30 players.</p>
+          <div class="row"><button data-host="wave">Host on the TV</button></div>
         </div>
       </article>
     </div>
@@ -804,9 +833,10 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="fx.js?v=202610241916"></script>
-<script src="content.js?v=202610241916"></script>
-<script src="games/taboo.js?v=202610241916"></script>
-<script src="app.js?v=202610241916"></script>
+<script src="fx.js?v=202610241919"></script>
+<script src="content.js?v=202610241919"></script>
+<script src="games/taboo.js?v=202610241919"></script>
+<script src="games/wave.js?v=202610241919"></script>
+<script src="app.js?v=202610241919"></script>
 </body>
 </html>

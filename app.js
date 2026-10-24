@@ -60,7 +60,10 @@ async function api(body){
 }
 
 /* ---------- settings ---------- */
-let players=store.get("players",["Mom","Dad","Maya","Leo"]);
+const FAMILY=["Ennis","Coral","Essence","Eden"];
+let players=store.get("players",FAMILY);
+/* Anyone still on the old example names gets the family's names instead. */
+if(JSON.stringify(players)===JSON.stringify(["Mom","Dad","Maya","Leo"])){players=FAMILY.slice();store.set("players",players)}
 let scores=store.get("scores",{});
 let packId=store.get("pack","animals");
 let fibs=store.get("fibs",1);

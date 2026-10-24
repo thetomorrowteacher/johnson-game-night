@@ -58,9 +58,9 @@ const PACK_ORDER=Object.keys(PACKS);
 
 /* What each game needs from the shared screens. */
 const GAMES={
-  flaugin:{name:"Flaugin",min:3,local:true,seg:"Fakers",timer:120,timerLabel:"Two-minute talk timer",
+  flaugin:{name:"Flaugin",min:3,local:true,seg:"Flaugers",timer:120,timerLabel:"Two-minute talk timer",
     sub:{local:"Everyone shares one phone and takes turns peeking.",host:"Pick a pack, then open a room. Everyone joins on their own phone."},
-    rules:["Everyone looks at their secret card. The faker’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught faker gets one guess at the word to steal the round."]},
+    rules:["Everyone looks at their secret card. The Flauger’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught Flauger gets one guess at the word to steal the round."]},
   copycat:{name:"Copycat",min:3,local:true,seg:"Copycats",timer:90,timerLabel:"90-second debate timer",
     sub:{local:"Everyone shares one phone and peeks at their mission.",host:"Open a room. Everyone gets their mission on their own phone."},
     rules:["Everyone gets a secret mission. The Copycat’s mission is a little different, and they know it.","The TV shows a debate topic. Talk it out while you secretly complete your mission.","Vote for the player you think had the odd mission.","Catch the Copycat: +2 for every correct vote. Copycat escapes: +4."]},
@@ -300,8 +300,8 @@ function cardFront(c){
   const f=el("div",{style:"display:flex;flex-direction:column;gap:10px;align-items:center"});
   if(c.isFib){
     let h=c.pack?"Pack: "+c.pack+". Blend in!":"No word for you. Blend in!";
-    if(c.twoFibs)h+=" Someone else is flaugin’ too.";
-    f.append(el("span",{class:"label",text:"You are"}),el("span",{class:"word",text:"Flaugin’"}),el("span",{class:"hint",text:h}));
+    if(c.twoFibs)h+=" There’s another Flauger too.";
+    f.append(el("span",{class:"label",text:"You’re the"}),el("span",{class:"word",text:"Flauger"}),el("span",{class:"hint",text:h}));
   }else f.append(el("span",{class:"label",text:"Secret word"}),el("span",{class:"word",text:c.word}),el("span",{class:"hint",text:c.pack?"Pack: "+c.pack:""}));
   return {front:f,odd:!!c.isFib,tall:false};
 }
@@ -332,8 +332,8 @@ function award(sc,outcome,ids,fibIds,votedId){
 }
 function verdictText(outcome,fibText,votedName){
   return outcome==="escaped"?[fibText+" got away!","lose","You voted out "+votedName+", who knew the word."]:
-    outcome==="stole"?[votedName+" guessed it!","lose","Caught, but the faker still figured out the word."]:
-    ["The family wins!","win","Faker caught and the word stayed safe."];
+    outcome==="stole"?[votedName+" guessed it!","lose","Caught, but the Flauger still figured out the word."]:
+    ["The family wins!","win","Flauger caught and the word stayed safe."];
 }
 const scorePrev={};
 function renderScoreTable(body,rows,animate){
@@ -608,9 +608,9 @@ function finishLocal(outcome){
   award(scores,outcome,players,fibNames,players[game.voted]);store.set("scores",scores);
   const [t,cls,line]=verdictText(outcome,fibText,players[game.voted]);
   $("resTitle").className="verdict "+cls;$("resTitle").textContent=t;
-  const l=$("resLine");l.textContent=line+" The word was ";l.append(el("b",{text:game.word}),document.createTextNode(". Flaugin’: "+fibText+"."));
+  const l=$("resLine");l.textContent=line+" The word was ";l.append(el("b",{text:game.word}),document.createTextNode(". "+(game.fibIdx.length>1?"The Flaugers: ":"The Flauger: ")+fibText+"."));
   $("resDetails").textContent="";
-  $("resNote").textContent="Faker escapes: +2. Faker caught but guesses the word: +1. Faker caught and misses: +1 to everyone else.";
+  $("resNote").textContent="Flauger escapes: +2. Flauger caught but guesses the word: +1. Flauger caught and misses: +1 to everyone else.";
   renderScoreTable($("scoreBody"),players.map(n=>[n,scores[n]||0]),true);show("vResult");drumThen(outcome==="caught",$("resTitle"),outcome==="stole");
 }
 function finishLocalOdd(v){
@@ -997,8 +997,8 @@ function renderHostFlaugin(main,side){
   if(H.phase==="result"){
     const fibNames=H.fib.map(nameOf);const [t,cls,line]=verdictText(H.outcome,fibNames.join(" and "),nameOf(H.voted));
     main.append(el("p",{class:"verdict "+cls,text:t}));
-    const l=el("p",{class:"reveal-line",text:line+" The word was "});l.append(el("b",{text:H.word}),document.createTextNode(". Flaugin’: "+fibNames.join(" and ")+"."));main.append(l);
-    const sb2=scoreboard();sb2.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Faker escapes: +2. Caught but guesses the word: +1. Caught and misses: +1 to everyone else."}));main.append(sb2);
+    const l=el("p",{class:"reveal-line",text:line+" The word was "});l.append(el("b",{text:H.word}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."));main.append(l);
+    const sb2=scoreboard();sb2.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Flauger escapes: +2. Caught but guesses the word: +1. Caught and misses: +1 to everyone else."}));main.append(sb2);
     resultFooter(main);
     side.append(el("div",{class:"panel"},el("h3",{text:"The votes"}),tallyBars(true)),joinCard());return;
   }
@@ -1318,7 +1318,7 @@ function renderPlayerInner(){
     const g=el("div",{class:"vote-grid"});
     s.roster.filter(r=>r.pid!==P.pid).forEach(r=>g.append(el("button",{type:"button",text:r.name,"aria-pressed":String(mine===r.pid),onclick:()=>{P.vote={r:s.voteRound,target:r.pid};sendVote();FX.play("vote");FX.vibrate(20);renderPlayer()}})));
     v.append(el("div",{class:"panel"},g));
-    if(P.card&&(P.card.isFib||P.card.odd))v.append(el("p",{class:"status on-felt",text:s.game==="flaugin"?"You’re flaugin’. Vote for someone else to keep your cover.":"You’re the Copycat. Vote for someone else to keep your cover."}));
+    if(P.card&&(P.card.isFib||P.card.odd))v.append(el("p",{class:"status on-felt",text:s.game==="flaugin"?"You’re the Flauger. Vote for someone else to keep your cover.":"You’re the Copycat. Vote for someone else to keep your cover."}));
     return;
   }
   if(s.phase==="final"){
@@ -1343,7 +1343,7 @@ function renderPlayerInner(){
       const amFib=fibIds.includes(P.pid);
       const scored=s.outcome==="escaped"?amFib:s.outcome==="stole"?s.votedOut===P.pid:!amFib;
       v.append(el("p",{class:"verdict "+(scored?"win":"lose"),text:scored?"You scored!":t}));
-      const l=el("p",{class:"reveal-line",text:"The word was "});l.append(el("b",{text:s.word||"?"}),document.createTextNode(". Flaugin’: "+fibNames.join(" and ")+"."));
+      const l=el("p",{class:"reveal-line",text:"The word was "});l.append(el("b",{text:s.word||"?"}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."));
       v.append(l,myScore(s),el("p",{class:"sub",text:"The next round starts from the big screen."}));
       return;
     }

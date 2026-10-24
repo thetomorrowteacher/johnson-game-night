@@ -535,7 +535,7 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
         <div class="game-body">
           <h3 class="game-name">Flau<span>gin</span></h3>
           <p class="define"><i>Flaugin’</i> (adj.) Memphis slang for lying, fronting, faking it.</p>
-          <p class="game-desc">Everyone gets the secret word except whoever’s flaugin’. Give one-word clues, sniff out the faker, and vote them out. 3 to 30 players.</p>
+          <p class="game-desc">Everyone gets the secret word except whoever’s flaugin’. Give one-word clues, sniff out the Flauger, and vote them out. 3 to 30 players.</p>
           <div class="row"><button data-host="flaugin">Host on the TV</button><button class="btn-ghost" data-local="flaugin">One-phone game</button></div>
         </div>
       </article>
@@ -608,7 +608,7 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
     </div>
     <div class="panel">
       <h3>House rules</h3>
-      <label class="toggle" id="hintRow"><input type="checkbox" id="optHint" checked><span>The faker sees the pack name<small>Recommended for younger players.</small></span></label>
+      <label class="toggle" id="hintRow"><input type="checkbox" id="optHint" checked><span>The Flauger sees the pack name<small>Recommended for younger players.</small></span></label>
       <label class="toggle" id="timerRow"><input type="checkbox" id="optTimer" checked><span><span id="timerLabel">Two-minute talk timer</span><small>Keeps the discussion moving before the vote.</small></span></label>
       <div id="cfgRows" class="cfg-rows"></div>
       <div class="row" id="voiceRow" style="justify-content:space-between">
@@ -628,20 +628,20 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
         </div>
       </div>
       <div class="row" id="segRow" style="justify-content:space-between">
-        <span style="font-weight:600" id="segLabel">Fakers</span>
-        <div class="seg" role="group" aria-label="Number of fakers">
+        <span style="font-weight:600" id="segLabel">Flaugers</span>
+        <div class="seg" role="group" aria-label="Number of Flaugers">
           <button type="button" data-fibs="1" aria-pressed="true">One</button>
           <button type="button" data-fibs="2" aria-pressed="false">Two</button>
         </div>
       </div>
-      <p class="status" id="fibNote">Two fakers kicks in only when 6 or more people play.</p>
+      <p class="status" id="fibNote">Two Flaugers kicks in only when 6 or more people play.</p>
     </div>
     <button class="btn-big" id="startBtn">Deal the cards</button>
     <ol class="rules" id="rulesList">
-      <li>Everyone looks at their secret card. The faker’s card has no word.</li>
+      <li>Everyone looks at their secret card. The Flauger’s card has no word.</li>
       <li>Go around the table. Everyone says one word that fits the secret.</li>
       <li>Talk it over, then vote out the player you think is flaugin’.</li>
-      <li>A caught faker gets one guess at the word to steal the round.</li>
+      <li>A caught Flauger gets one guess at the word to steal the round.</li>
     </ol>
   </section>
 
@@ -692,7 +692,7 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
     <p class="reveal-line" id="caughtLine"></p>
     <div class="panel">
       <h3>Last chance</h3>
-      <p class="sub">The faker gets one guess at the secret word. Say it out loud, then reveal the answer.</p>
+      <p class="sub">The Flauger gets one guess at the secret word. Say it out loud, then reveal the answer.</p>
       <button class="btn-felt" id="showWord">Show the word</button>
       <p class="verdict" id="guessWord" hidden style="color:var(--felt);font-size:1.8rem"></p>
       <div class="row" id="guessBtns" hidden>
@@ -712,7 +712,7 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
     <div class="panel">
       <h3>Scoreboard</h3>
       <table class="scores"><tbody id="scoreBody"></tbody></table>
-      <p class="sub" style="font-size:.82rem"><span id="resNote">Faker escapes: +2. Faker caught but guesses the word: +1. Faker caught and misses: +1 to everyone else.</span></p>
+      <p class="sub" style="font-size:.82rem"><span id="resNote">Flauger escapes: +2. Flauger caught but guesses the word: +1. Flauger caught and misses: +1 to everyone else.</span></p>
     </div>
     <div id="localRate"></div>
     <button class="btn-big" id="nextRound">Next round</button>
@@ -754,8 +754,8 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="fx.js?v=202610241818"></script>
-<script src="content.js?v=202610241818"></script>
-<script src="app.js?v=202610241818"></script>
+<script src="fx.js?v=202610241824"></script>
+<script src="content.js?v=202610241824"></script>
+<script src="app.js?v=202610241824"></script>
 </body>
 </html>

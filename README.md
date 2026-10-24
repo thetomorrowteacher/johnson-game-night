@@ -32,7 +32,7 @@ Each game has its own house rules, saved on the device that hosts:
 - **Each player's turn** (Off to 2 min): every player gets their own turn in a random order; the clock moves on by itself, and the speaker can tap "I'm done" on their phone.
 - **Open talk / debate timer** after the turns.
 - Every stretch has **Skip** and **+30 sec** on the TV.
-- Also per game: number of fakers or copycats (6+ players), Glitch details changed (1 to 3), Rulebreakers word/number mode and guesses (1 to 3).
+- Also per game: number of Flaugers or Copycats (6+ players), Glitch details changed (1 to 3), Rulebreakers word/number mode and guesses (1 to 3).
 
 ## Music
 Game Show Grind plays on the home screen. Cuts from Lofi Gameshow, Spin the Wreck, Spin the Wreck 2 and Gravity Glitch (in `music/`) play under the lobby, the deal, the talking, voting and results, with short stingers for the deal, "go", votes and wins. Music only plays on the TV, never on phones.

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d5a26"/><stop offset=".55" stop-color="#15130e"/><stop offset="1" stop-color="#5a120e"/></linearGradient>
+<filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000" flood-opacity=".5"/></filter>
+</defs>
+<rect width="1200" height="700" fill="url(#bg)"/>
+<g font-family="'Bowlby One','Arial Black',Impact,sans-serif" text-anchor="middle" filter="url(#sh)">
+<g transform="translate(600 360) rotate(-4)">
+<rect x="-210" y="-260" width="420" height="520" rx="30" fill="#fffaee"/>
+<rect x="-210" y="-260" width="420" height="130" rx="30" fill="#c8211a"/><rect x="-210" y="-160" width="420" height="30" fill="#c8211a"/>
+<text y="-170" font-size="78" fill="#fffaee">PIZZA</text>
+<text y="-80" font-size="26" fill="#6b6253" font-family="Arial,sans-serif" font-weight="700" letter-spacing="6">DON'T SAY</text>
+<g font-size="48" fill="#15130e"><text y="-10">CHEESE</text><text y="60">SLICE</text><text y="130">PEPPERONI</text><text y="200">ITALY</text></g>
+<g stroke="#c8211a" stroke-width="10" stroke-linecap="round"><line x1="-120" y1="-26" x2="120" y2="-26"/></g>
+</g>
+<g transform="translate(220 230) rotate(-12)"><rect x="-120" y="-60" width="240" height="120" rx="60" fill="#c8211a"/><text y="20" font-size="56" fill="#fffaee">BUZZ!</text></g>
+<g transform="translate(980 470) rotate(10)"><rect x="-150" y="-60" width="300" height="120" rx="60" fill="#2f9a2b"/><text y="20" font-size="52" fill="#fffaee">GOT IT ✓</text></g>
+<g transform="translate(990 200) rotate(8)"><path d="M-110 -70 h220 a30 30 0 0 1 30 30 v70 a30 30 0 0 1 -30 30 h-120 l-50 40 v-40 h-50 a30 30 0 0 1 -30 -30 v-70 a30 30 0 0 1 30 -30z" fill="#f6c21c"/><text y="10" font-size="40" fill="#15130e">TALMBOUT?</text></g>
+</g>
+</svg>

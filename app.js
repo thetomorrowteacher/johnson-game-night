@@ -1,7 +1,8 @@
 /* Johnson Family Game Night.
    The TV hosts a live room (Supabase Realtime); phones join with a PIN or QR.
    Private cards come from the `flaudjer` edge function, so each phone only ever sees its own card.
-   Games: Flaugin, Parrot (id copycat), Tweakin (id glitch), Secret Agenda, RuleBreakers (id rules). */
+   Games: Flaugin, Parrot (id copycat), Tweakin (id glitch), Secret Agenda, RuleBreakers (id rules).
+   Newer games live in games/*.js and register on window.GN_PLUGINS (see the PLUGINS section). */
 (function(){
 "use strict";
 const SB_URL="https://hyxiagexyptzvetqjmnj.supabase.co";   // PFLX Applications project (gamenight_* tables)
@@ -28,6 +29,7 @@ const Trans=(function(){
   return {play,busy:()=>Date.now()<busyUntil};
 })();
 function sceneFor(game,phase,round){
+  const PG=(window.GN_PLUGINS||{})[game];if(PG&&PG.scene){const r=PG.scene(phase,round);if(r!==undefined)return r}
   const G=GAMES[game]||{name:"Game Night"};
   if(phase==="cards")return ["Round "+round,G.name];
   if(phase==="play")return ["Open the gate!","RuleBreakers · Round "+round];
@@ -188,6 +190,9 @@ function clockTitle(g,game,nameFn,me){
 }
 /* Per-game settings, saved on this device. timer: seconds (0 = off). count: odd players when 6+ play. */
 const CFG_DEFAULTS={flaugin:{study:30,turn:0,timer:120,count:1,clown:false},copycat:{study:30,turn:60,timer:60,count:1},glitch:{study:30,turn:0,timer:180,count:1,details:2},agenda:{study:30,turn:60,timer:120},rules:{timer:0,kind:"word",guesses:2}};
+/* ---------- PLUGINS: games in games/*.js ---------- */
+const PLUG=window.GN_PLUGINS||{};
+Object.keys(PLUG).forEach(id=>{GAMES[id]=PLUG[id].config;if(PLUG[id].defaults)CFG_DEFAULTS[id]=PLUG[id].defaults});
 function cfg(g){const d=CFG_DEFAULTS[g]||{};return Object.assign({},d,store.get("cfg:"+g,{}))}
 function setCfg(g,k,v){const c=store.get("cfg:"+g,{});c[k]=v;store.set("cfg:"+g,c)}
 (function migrate(){const old=store.get("fibs",null);if(old===2&&!store.get("cfg:flaugin",null))setCfg("flaugin","count",2);
@@ -490,6 +495,7 @@ function segRow(label,opts,cur,onPick,note){
 function renderCfg(){
   const box=$("cfgRows");if(!box)return;box.textContent="";
   const g=curGame,c=cfg(g),G=GAMES[g];const set=(k)=>v=>setCfg(g,k,v);
+  if(PLUG[g]){if(PLUG[g].cfgRows)PLUG[g].cfgRows(box,c,set,segRow);return}
   const timerOpts=g==="rules"?[[0,"None"],[120,"2 min"],[180,"3 min"],[300,"5 min"]]:[[0,"Off"],[60,"1 min"],[90,"1½"],[120,"2 min"],[180,"3 min"],[300,"5 min"]];
   if(g!=="rules"){
     box.append(segRow("Card study time",[[0,"Off"],[15,"15 sec"],[30,"30 sec"],[45,"45 sec"],[60,"1 min"]],c.study,set("study"),mode==="local"?"Used in TV rooms. With one phone, each person reads as they pass.":"Phones get this long to study their cards, then the round starts by itself."));
@@ -683,7 +689,7 @@ async function openRoom(){
   }catch(e){$("fibNote").className="status err";$("fibNote").textContent=e.message;$("startBtn").disabled=false;$("startBtn").textContent="Open the room"}
 }
 function freshRound(){
-  Object.assign(H,{ready:{},votes:{},voted:null,outcome:"",tally:null,tie:false,showWord:false,endsAt:0,word:"",fib:[],clown:null,hasClown:false,
+  Object.assign(H,{ready:{},votes:{},voted:null,outcome:"",tally:null,tie:false,showWord:false,endsAt:0,word:"",fib:[],clown:null,hasClown:false,ext:null,
     meta:null,secret:null,first:{},final:{},log:[],solved:[],guesses:{},tryAt:{},rp:{},reveal:null,err:""});
 }
 function resumeRoom(h){
@@ -715,6 +721,7 @@ function resumeRoom(h){
       else if(p.kind==="final"&&H.phase==="final"&&p.r===H.voteRound){const had=H.final[p.pid]!=null;H.final[p.pid]=o;if(!had){FX.play("vote");broadcast()}renderHost()}
     })
     .on("broadcast",{event:"try"},({payload})=>onTry(payload||{}))
+    .on("broadcast",{event:"act"},({payload})=>{const p=payload||{};const g=H&&PLUG[H.game];if(g&&g.onAct&&p.game===H.game&&p.round===H.round&&inRoster(p.pid))g.onAct(p)})
     .on("broadcast",{event:"guess"},({payload})=>onGuess(payload||{}))
     .subscribe(status=>{
       if(status==="SUBSCRIBED"){setConn(true);ch.track({host:true});broadcast()}
@@ -788,6 +795,7 @@ function publicState(){
     meta:H.meta,firstIn:Object.keys(H.first),finalIn:Object.keys(H.final),
     log:H.game==="rules"?H.log.slice(-12):null,solved:H.solved,guesses:H.guesses,maxGuesses:H.maxGuesses||2,
     reveal:H.phase==="result"?H.reveal:null,
+    ext:PLUG[H.game]&&PLUG[H.game].pub?PLUG[H.game].pub():null,
     scores:H.roster.map(r=>[r.pid,H.scores[r.pid]||0])};
 }
 function broadcast(){if(ch&&H)ch.send({type:"broadcast",event:"state",payload:publicState()}).catch(()=>{})}
@@ -845,6 +853,9 @@ async function hostDeal(){
       const r=await api({action:"deal",code:H.code,hostToken:H.hostToken,playerIds:ids,words:poolFor(pid),pack:PACKS[pid].name,hint:$("optHint").checked,fibs:oddCount(ids.length,"flaugin"),weights:oddWeights(ids),clown:!!cfg("flaugin").clown&&ids.length>=4});
       H.roster=roster;roster.forEach(x=>H.names[x.pid]=x.name);freshRound();
       H.round=r.round;H.packId=pid;H.hasClown=!!r.clown;H.hint=$("optHint").checked;
+    }else if(PLUG[H.game]){
+      H.roster=roster;roster.forEach(x=>H.names[x.pid]=x.name);freshRound();
+      await PLUG[H.game].deal(ids,roster);
     }else if(H.game==="rules"){
       H.roster=roster;roster.forEach(x=>H.names[x.pid]=x.name);freshRound();
       const b=buildRules();H.meta=b.meta;H.secret=b.secret;H.round=H.round+1;
@@ -860,7 +871,7 @@ async function hostDeal(){
     H.timerSecs=cfg(H.game).timer;H.timerOn=H.timerSecs>0;H.maxGuesses=cfg("rules").guesses;
     H.order=shuffle(roster.map(r=>r.pid));
     setTag(G.name+" · Room "+H.code+" · Round "+H.round);H.err="";
-    setPhase(H.game==="rules"?"play":"cards");
+    setPhase(PLUG[H.game]?PLUG[H.game].startPhase:H.game==="rules"?"play":"cards");
   }catch(e){H.err=e.message;renderHost()}
   finally{dealing=false;renderHost()}
 }
@@ -977,6 +988,7 @@ function renderHostInner(){
       el("button",{class:"btn-chalk btn-small",text:"Close room",onclick:closeRoom})));
     side.append(joinCard());return;
   }
+  if(PLUG[H.game])return PLUG[H.game].renderHost(main,side);
   if(H.game==="flaugin")return renderHostFlaugin(main,side);
   if(H.game==="copycat"||H.game==="glitch")return renderHostOdd(main,side);
   if(H.game==="agenda")return renderHostAgenda(main,side);
@@ -1201,7 +1213,7 @@ function onState(s){
   P.state=s;P.slow=false;
   if(GAMES[s.game])setTag(GAMES[s.game].name+" · Room "+P.pin);
   const inRound=Array.isArray(s.roster)&&s.roster.some(r=>r.pid===P.pid);
-  if(inRound&&s.game!=="rules"&&CARD_PHASES.includes(s.phase)&&(!P.card||P.card.round!==s.round||P.card.game!==s.game)&&!P.fetching)fetchCard();
+  if(inRound&&(PLUG[s.game]?(PLUG[s.game].cardPhases||[]).includes(s.phase):s.game!=="rules"&&CARD_PHASES.includes(s.phase))&&(!P.card||P.card.round!==s.round||P.card.game!==s.game)&&!P.fetching)fetchCard();
   // re-send anything the TV may have missed
   if(inRound&&P.peekedRound===s.round&&!(s.ready||[]).includes(P.pid))sendReady();
   if(inRound&&s.phase==="vote"&&P.vote&&P.vote.r===s.voteRound&&!(s.voted||[]).includes(P.pid))sendVote();
@@ -1209,7 +1221,8 @@ function onState(s){
   if(inRound&&s.game==="agenda"&&s.phase==="final"&&P.final&&P.final.r===s.voteRound&&!(s.finalIn||[]).includes(P.pid))sendPick("final",P.final.o);
   phoneFx(prev,s,inRound);
   const changed=!prev||prev.epoch!==s.epoch||prev.phase!==s.phase||prev.showWord!==s.showWord||prev.endsAt!==s.endsAt||prev.round!==s.round||prev.game!==s.game
-    ||(s.game==="rules"&&JSON.stringify([s.log,s.solved,s.guesses])!==JSON.stringify([prev.log,prev.solved,prev.guesses]));
+    ||(s.game==="rules"&&JSON.stringify([s.log,s.solved,s.guesses])!==JSON.stringify([prev.log,prev.solved,prev.guesses]))
+    ||(!!PLUG[s.game]&&JSON.stringify(s.ext)!==JSON.stringify(prev.ext));
   if(changed)renderPlayer();
 }
 function phoneScored(s){
@@ -1291,6 +1304,7 @@ function renderPlayerInner(){
     v.append(el("p",{class:"big-msg",text:G.name+" round "+s.round+" is underway."}),hello,el("p",{class:"sub",text:"You'll be in the next round."}),change);return;
   }
   if(s.game==="rules")return renderPlayerRules(v,s,draft,hadFocus,openDetails);
+  if(PLUG[s.game])return PLUG[s.game].renderPlayer(v,s);
   const cardView=()=>{
     if(P.card&&P.card.round===s.round&&P.card.game===s.game)return makeCard(P.card,()=>{if(P.peekedRound!==s.round){P.peekedRound=s.round;sendReady();const n=$("pReadyNote");if(n)n.textContent=s.game==="agenda"?"Now make your secret first pick below.":"Got it. Watch the big screen.";renderAgendaPick()}});
     if(P.cardErr)return el("div",{class:"panel"},el("p",{class:"status err",text:P.cardErr}),el("button",{class:"btn-felt",text:"Try again",onclick:fetchCard}));
@@ -1511,6 +1525,7 @@ var Music=(function(){
     if(mode==="host"&&H&&!vis("vSetup")&&!vis("vHome")){
       const g=H.game,ph=H.phase;
       if(ph==="lobby")return ["lobby",0.4];
+      if(PLUG[g]&&PLUG[g].music){const m=PLUG[g].music(ph);if(m)return m}
       if(ph==="cards")return ["deal",0.3];
       if(ph==="clues"||ph==="talk")return [g==="glitch"?"tense":"lobby",0.1];
       if(ph==="play")return ["tense",0.22];
@@ -1573,6 +1588,19 @@ var Music=(function(){
   ANN.setDuck(t=>{window.__gnAnnTalking=t;if(typeof Music!=="undefined")Music.sync()});
   sync();
 })();
+/* ---------- toolkit for games/*.js ---------- */
+const CORE={
+  get H(){return H},get P(){return P},get mode(){return mode},get ch(){return ch},
+  api,broadcast,setPhase:p=>setPhase(p),renderHost,renderPlayer,nameOf,rosterName,el,$,FX,ANN,Music,Trans,shuffle,rnd,cfg,setCfg,fmt,
+  scoreboard,resultFooter,joinCard,chipsFor,errLine,myScore,saveHost,animIn,
+  /* phone -> TV message for the current game and round */
+  act(type,data){const s=P&&P.state;if(ch&&s)ch.send({type:"broadcast",event:"act",payload:Object.assign({pid:P.pid,game:s.game,round:s.round,type},data||{})}).catch(()=>{})},
+  addScores(map){Object.entries(map).forEach(([id,n])=>{if(n)H.scores[id]=(H.scores[id]||0)+n});saveHost()},
+  card(){const s=P&&P.state;return P&&P.card&&s&&P.card.round===s.round&&P.card.game===s.game?P.card:null},
+  cardErr(){return P&&P.cardErr},retryCard:()=>fetchCard(),
+  setCards:cards=>api({action:"setCards",code:H.code,hostToken:H.hostToken,game:H.game,round:H.round,cards})
+};
+Object.values(PLUG).forEach(g=>{if(g.init)g.init(CORE)});
 /* ---------- intro: Adventures with the Johnsons logo scene, then the home screen ---------- */
 (function intro(){
   const box=$("intro");if(!box||!document.documentElement.classList.contains("intro-on"))return;

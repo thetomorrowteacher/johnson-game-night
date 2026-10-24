@@ -497,6 +497,39 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 @keyframes tDim{0%,100%{opacity:0}18%,75%{opacity:1}}
 @keyframes tCard{0%{opacity:0;transform:scale(.4) rotate(-6deg)}22%{opacity:1;transform:scale(1.06) rotate(1deg)}32%{transform:none}78%{opacity:1;transform:none}100%{opacity:0;transform:scale(1.15) translateY(-20px)}}
 @keyframes tFade{0%,100%{opacity:0}20%,80%{opacity:1}}
+
+/* ---------- Talmbout (Taboo-style) ---------- */
+.team-board{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.team-board.vert{grid-template-columns:1fr}
+.team-box{border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;color:#fffaee;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.team-box b{font-family:var(--display);font-weight:400;font-size:1.2rem}
+.team-box .team-score{font-family:var(--display);font-size:3rem;line-height:1}
+.team-box small{opacity:.85;font-weight:600}
+.t-red{background:var(--berry)}.t-green{background:var(--lav)}
+.t-red-txt{color:#ff6b5e}.t-green-txt{color:#5fd34f}
+.team-pill{display:flex;justify-content:space-between;align-items:center;border-radius:999px;padding:8px 16px;color:#fffaee;font-weight:800}
+.taboo-card{background:var(--card);color:var(--ink);border-radius:20px;overflow:hidden;box-shadow:0 6px 0 var(--felt),0 14px 30px rgba(0,0,0,.3);text-align:center}
+.taboo-card .tw{margin:0;padding:18px 12px;background:var(--berry);color:#fffaee;font-family:var(--display);font-size:clamp(2rem,9vw,3rem);line-height:1;overflow-wrap:anywhere}
+.taboo-card .tb-label{margin:12px 0 4px;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;font-weight:800;color:var(--muted)}
+.taboo-card .tb{list-style:none;margin:0;padding:0 12px 16px;display:flex;flex-direction:column;gap:6px}
+.taboo-card .tb li{font-family:var(--display);font-size:1.5rem;color:var(--felt)}
+.taboo-btns{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.got-btn{background:var(--lav)!important;color:#fff!important}
+.buzz-btn{background:var(--berry)!important;color:#fff!important;font-size:2rem!important;min-height:90px}
+.taboo-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.taboo-top .timer{margin:0}
+.got-mini{font-family:var(--display);font-size:1.6rem;color:var(--felt)}
+.taboo-live{display:flex;align-items:center;gap:28px;flex-wrap:wrap;position:relative}
+.taboo-live .timer{font-size:clamp(4rem,12vw,8rem);color:var(--on-bg)}
+.got-count{display:flex;flex-direction:column;align-items:center;color:var(--sky)}
+.got-count b{font-family:var(--display);font-size:clamp(3rem,9vw,6rem);line-height:1}
+.got-count span{font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.flash{font-family:var(--display);font-size:clamp(2rem,6vw,4rem);padding:6px 20px;border-radius:16px}
+.flash.f-got{background:var(--lav);color:#fff}.flash.f-buzz{background:var(--berry);color:#fff}.flash.f-skip{background:rgba(255,255,255,.15);color:var(--on-bg)}
+@media (prefers-reduced-motion:no-preference){.flash{animation:pop .45s cubic-bezier(.2,1.4,.4,1) both}}
+.turn-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.turn-log li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:var(--soft);font-weight:700}
+.turn-log li.k-got b{color:var(--win)}.turn-log li.k-buzz b{color:var(--berry)}.turn-log li.k-skip b{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -586,7 +619,19 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
           <h3 class="game-name">Rule<span>Breakers</span></h3>
           <p class="game-desc">The gate only lets certain words or numbers through. Test your guesses on your phone, watch what gets ACCEPTED, and be first to crack the rule. 2 to 30 players.</p>
           <div class="row"><button data-host="rules">Host on the TV</button></div>
+              <article class="game-tile" data-game="taboo">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-taboo.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">Say it without saying it</span>
         </div>
+        <div class="game-body">
+          <h3 class="game-name">Talm<span>bout</span></h3>
+          <p class="define"><i>Talmbout</i> <span class="say">say it: <b>TALM</b>-bout</span> as in “what you talmbout?”</p>
+          <p class="game-desc">Team Red vs. Team Green. Describe the word on your phone without saying it or any banned word, while the other team watches your card and hits BUZZ. 4 to 30 players.</p>
+          <div class="row"><button data-host="taboo">Host on the TV</button></div>
+        </div>
+      </article>
+    </div>
       </article>
     <p class="status on-felt" id="homeNote"></p>
   </section>
@@ -759,8 +804,9 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="fx.js?v=202610241858"></script>
-<script src="content.js?v=202610241858"></script>
-<script src="app.js?v=202610241858"></script>
+<script src="fx.js?v=202610241916"></script>
+<script src="content.js?v=202610241916"></script>
+<script src="games/taboo.js?v=202610241916"></script>
+<script src="app.js?v=202610241916"></script>
 </body>
 </html>

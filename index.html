@@ -375,6 +375,22 @@ header.top>.row{flex-wrap:nowrap;justify-content:flex-end;min-width:0}
 body.tv .fs-btn .fs-label{display:inline}
 body.tv .fs-btn{padding:8px 14px}
 header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
+
+/* round clock */
+.clock-panel{display:flex;flex-direction:column;gap:8px;align-items:stretch;text-align:center}
+.clock-title{margin:0;font-family:var(--display);font-size:clamp(1.3rem,3vw,2rem);line-height:1.1;color:var(--felt)}
+.clock-panel.turn,.clock-panel.mine{box-shadow:0 0 0 4px var(--sky),0 4px 0 var(--felt)}
+.clock-panel.mine .clock-title{color:var(--berry)}
+.order li.now{background:var(--sky);color:var(--felt);font-weight:800;border-radius:8px}
+@media (prefers-reduced-motion:no-preference){.order li.now{animation:nowPulse 1.2s ease-in-out infinite}
+@keyframes nowPulse{50%{box-shadow:0 0 0 4px rgba(246,194,28,.45)}}}
+/* per-game settings rows */
+.cfg-rows{display:flex;flex-direction:column;gap:12px}
+.cfg-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.cfg-label{font-weight:600}
+.cfg-block{display:flex;flex-direction:column;gap:4px}
+.seg{flex-wrap:wrap}
+#voiceRow{gap:10px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -478,6 +494,7 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
       <h3>House rules</h3>
       <label class="toggle" id="hintRow"><input type="checkbox" id="optHint" checked><span>The faker sees the pack name<small>Recommended for younger players.</small></span></label>
       <label class="toggle" id="timerRow"><input type="checkbox" id="optTimer" checked><span><span id="timerLabel">Two-minute talk timer</span><small>Keeps the discussion moving before the vote.</small></span></label>
+      <div id="cfgRows" class="cfg-rows"></div>
       <div class="row" id="voiceRow" style="justify-content:space-between">
         <span style="font-weight:600">Announcer</span>
         <div class="seg" role="group" aria-label="Announcer voice">
@@ -530,12 +547,14 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
     </div>
     <div class="panel prompt-panel" id="talkPrompt" hidden></div>
     <div class="panel"><h3>Speaking order</h3><ol class="order" id="orderList"></ol></div>
-    <div class="panel" id="timerPanel">
-      <h3>Talk it over</h3>
-      <div class="timer" id="timer">2:00</div>
+    <div class="panel clock-panel" id="timerPanel">
+      <h3 id="timerHead">Timer</h3>
+      <p class="clock-title" id="timerTitle">Get ready…</p>
+      <div class="timer" id="timer">0:10</div>
+      <p class="sub" id="timerNext" style="margin:0"></p>
       <div class="row" style="justify-content:center">
-        <button class="btn-felt btn-small" id="timerBtn">Start timer</button>
-        <button class="btn-ghost btn-small" id="timerReset">Reset</button>
+        <button class="btn-felt btn-small" id="timerBtn">Skip</button>
+        <button class="btn-ghost btn-small" id="timerReset">+30 sec</button>
       </div>
     </div>
     <button class="btn-big" id="toVote">Time to vote</button>
@@ -618,8 +637,8 @@ header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="fx.js?v=202610241734"></script>
-<script src="content.js?v=202610241734"></script>
-<script src="app.js?v=202610241734"></script>
+<script src="fx.js?v=202610241743"></script>
+<script src="content.js?v=202610241743"></script>
+<script src="app.js?v=202610241743"></script>
 </body>
 </html>

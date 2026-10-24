@@ -24,3 +24,15 @@ Content for every game lives in `content.js`.
 - Theme music: "Game Show Grind" (`theme.mp3`), supplied by the Johnsons.
 - Announcer: Kenney Voiceover Pack #1 by Kenney Vleugels (kenney.nl), CC0, the same female/male voice clips PFLX uses in X-Live and Battle Arena (`announcer/`).
 - Sound effects are synthesized in the browser (`fx.js`), so there are no extra files.
+
+## Timers and settings
+Each game has its own house rules, saved on the device that hosts:
+- **Card study time** (Off to 1 min, default 30 sec): phones get time to study their cards, then the round starts by itself.
+- **10-second countdown** before the talking starts, so nobody has to press Start.
+- **Each player's turn** (Off to 2 min): every player gets their own turn in a random order; the clock moves on by itself, and the speaker can tap "I'm done" on their phone.
+- **Open talk / debate timer** after the turns.
+- Every stretch has **Skip** and **+30 sec** on the TV.
+- Also per game: number of fakers or copycats (6+ players), Glitch details changed (1 to 3), Rulebreakers word/number mode and guesses (1 to 3).
+
+## Music
+Game Show Grind plays on the home screen. Cuts from Lofi Gameshow, Spin the Wreck, Spin the Wreck 2 and Gravity Glitch (in `music/`) play under the lobby, the deal, the talking, voting and results, with short stingers for the deal, "go", votes and wins. Music only plays on the TV, never on phones.

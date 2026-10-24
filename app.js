@@ -44,7 +44,7 @@ const GAMES={
     rules:["The TV shows a family decision with four choices.","Everyone gets a secret agenda and makes a secret first pick.","Debate and negotiate, then everyone casts a final vote.","Every agenda that comes true scores 3 points. Allies and rivals are revealed at the end."]},
   rules:{name:"Rulebreakers",min:2,local:false,seg:null,timer:0,timerLabel:"",
     sub:{host:"Open a room. Everyone tests words on their own phone."},
-    rules:["The gate on the TV has a secret rule.","Type a word or number on your phone. The TV shows ACCEPTED or REJECTED for everyone.","When you think you know the rule, pick it from the list. You get two guesses.","First to crack it: +5. Everyone else who cracks it: +2."]}
+    rules:["The gate on the TV has a secret rule.","Type a word or number on your phone. The TV shows ACCEPTED or REJECTED for everyone.","When you think you know the rule, pick it from the list. Guesses are limited (2 by default).","First to crack it: +5. Everyone else who cracks it: +2."]}
 };
 
 /* ---------- small helpers ---------- */
@@ -60,17 +60,20 @@ function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(
 function rnd(n){try{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n}catch(e){return Math.floor(Math.random()*n)}}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 /* Pick the odd player(s) fairly: whoever had it in the last couple of rounds gets a lower chance, so streaks don't feel rigged. */
-function pickFakers(names,count,key){
-  key=key||"recentFakers";
-  const recent=store.get(key,[]);   // newest first, list of name arrays
-  const weightOf=n=>recent[0]&&recent[0].includes(n)?0.2:recent[1]&&recent[1].includes(n)?0.55:1;
+function pickFakers(names,count){
+  const night=store.get("oddNight",{at:Date.now(),counts:{},recent:[]});
+  if(Date.now()-night.at>12*3600e3){night.counts={};night.recent=[]}
+  const recent=night.recent,counts=night.counts;
+  const minC=Math.min(...names.map(n=>counts[n]||0));
+  const weightOf=n=>(recent[0]&&recent[0].includes(n)?0.12:recent[1]&&recent[1].includes(n)?0.45:1)/(1+1.6*((counts[n]||0)-minC));
   const pool=names.map((n,i)=>({i,w:weightOf(n)}));const out=[];
   while(out.length<count&&pool.length){
     const total=pool.reduce((t,x)=>t+x.w,0);let r=(rnd(1e6)/1e6)*total,k=0;
     for(;k<pool.length-1;k++){r-=pool[k].w;if(r<0)break}
     out.push(pool[k].i);pool.splice(k,1);
   }
-  store.set(key,[out.map(i=>names[i])].concat(recent).slice(0,3));
+  out.forEach(i=>counts[names[i]]=(counts[names[i]]||0)+1);
+  night.at=Date.now();night.recent=[out.map(i=>names[i])].concat(recent).slice(0,3);store.set("oddNight",night);
   return out;
 }
 /* Pick a content round we haven't seen lately. */
@@ -116,12 +119,58 @@ function resolvePack(){return packId==="__mix"?shuffle(PACK_ORDER)[0]:packId}
 function poolFor(pid){const p=PACKS[pid];const seen=used[pid]||[];let pool=p.words.filter(w=>!seen.includes(w));if(pool.length<2){used[pid]=[];store.set("used",used);pool=p.words.slice()}return pool}
 function markUsed(pid,w){used[pid]=(used[pid]||[]).concat(w);store.set("used",used)}
 function setGame(g){curGame=g;store.set("game",g)}
+/* ---------- round clock ----------
+   Cards: study time (TV rooms). Talking: a 10-second countdown, then one turn per player (optional),
+   then open talk (optional). Every stretch advances by itself and every stretch can be skipped. */
+function buildSeq(g,phase,order){
+  const c=cfg(g),q=[];
+  if(phase==="cards"){if(c.study>0)q.push({k:"study",secs:c.study});return q}
+  if(phase==="clues"||phase==="talk"||phase==="play"){
+    q.push({k:"count",secs:10});
+    if(phase!=="play"&&c.turn>0)(order||[]).forEach(w=>q.push({k:"turn",who:w,secs:c.turn}));
+    if(c.timer>0)q.push({k:"open",secs:c.timer});
+  }
+  return q;
+}
+function newClock(seq){const C={seq,i:-1,endsAt:0,lastSec:null,done:!seq.length};if(seq.length)clockGo(C,0);return C}
+function clockGo(C,i){C.i=i;C.lastSec=null;const g=C.seq[i];if(!g){C.done=true;C.endsAt=0;return false}C.endsAt=Date.now()+g.secs*1000;return true}
+function clockSeg(C){return C&&!C.done?C.seq[C.i]:null}
+function turnInfo(C){if(!C)return [0,0];const turns=C.seq.filter(x=>x.k==="turn");const no=C.seq.slice(0,C.i+1).filter(x=>x.k==="turn").length;return [no,turns.length]}
+function nextSpeaker(C){if(!C)return null;for(let j=C.i+1;j<C.seq.length;j++)if(C.seq[j].k==="turn")return C.seq[j].who;return null}
+/* Sounds for each second. loud=false on a host that's on another screen. Returns true when the stretch has run out. */
+function clockTick(C,loud){
+  const g=clockSeg(C);if(!g)return false;
+  const left=(C.endsAt-Date.now())/1000,sec=Math.ceil(left);
+  if(sec!==C.lastSec){C.lastSec=sec;
+    if(loud){
+      const last=C.i===C.seq.length-1;
+      if(g.k==="count"){if(sec>0&&sec<=3)ANN.count(sec);else if(sec>3)FX.play("tick");else if(sec<=0){ANN.say("go");if(!Music.sting("go"))FX.play("whoosh")}}
+      else if(g.k==="study"||g.k==="turn"){if(sec>0&&sec<=5)FX.play("tick");else if(sec<=0){if(last){FX.play("buzzer");ANN.line("timeout")}else FX.play("vote")}}
+      else if(g.k==="open"){if(sec===10&&g.secs>=30)ANN.line("hurry");else if(sec>0&&sec<=3)ANN.count(sec);else if(sec>0&&sec<10)FX.play("tick");else if(sec<=0){FX.play("buzzer");ANN.line("timeout")}}
+    }
+  }
+  return left<=0;
+}
+function clockTitle(g,game,nameFn,me){
+  if(!g)return "Time's up!";
+  if(g.k==="study")return game==="agenda"?"Study your agenda":game==="glitch"?"Study your case file":"Study your card";
+  if(g.k==="count")return "Get ready…";
+  if(g.k==="turn")return g.who===me?"Your turn!":nameFn(g.who)+"'s turn";
+  return game==="flaugin"?"Talk it over":game==="glitch"?"Open investigation":game==="rules"?"Time left":"Open debate";
+}
+/* Per-game settings, saved on this device. timer: seconds (0 = off). count: odd players when 6+ play. */
+const CFG_DEFAULTS={flaugin:{study:30,turn:0,timer:120,count:1},copycat:{study:30,turn:60,timer:60,count:1},glitch:{study:30,turn:0,timer:180,count:1,details:2},agenda:{study:30,turn:60,timer:120},rules:{timer:0,kind:"word",guesses:2}};
+function cfg(g){const d=CFG_DEFAULTS[g]||{};return Object.assign({},d,store.get("cfg:"+g,{}))}
+function setCfg(g,k,v){const c=store.get("cfg:"+g,{});c[k]=v;store.set("cfg:"+g,c)}
+(function migrate(){const old=store.get("fibs",null);if(old===2&&!store.get("cfg:flaugin",null))setCfg("flaugin","count",2);
+  if(store.get("timerOn",true)===false&&!store.get("cfg:flaugin",null))setCfg("flaugin","timer",0);
+  const rk=store.get("ruleKind",null);if(rk&&!store.get("cfg:rules",null))setCfg("rules","kind",rk)})();
 
 /* =====================================================================
    ROUND BUILDERS (shared by the TV and one-phone mode)
    Each returns {meta: public info for the TV, cards: {id: private card}, secret: host-only answers}.
    ===================================================================== */
-function oddCount(n){return n>=6&&fibs===2?2:1}
+function oddCount(n,g){return n>=6&&cfg(g||curGame).count===2?2:1}
 function buildCopycat(ids,oddIdx){
   const r=pickRound("copycat",C.copycat);
   const odd=oddIdx.map(i=>ids[i]);const cards={};
@@ -135,7 +184,7 @@ function buildCopycat(ids,oddIdx){
 function buildGlitch(ids,oddIdx){
   const c=pickRound("glitch",C.glitch);
   const odd=oddIdx.map(i=>ids[i]);
-  const changed=shuffle(c.facts.map((_,i)=>i)).slice(0,2).sort((a,b)=>a-b);
+  const changed=shuffle(c.facts.map((_,i)=>i)).slice(0,Math.max(1,Math.min(3,cfg("glitch").details||2))).sort((a,b)=>a-b);
   const truth=c.facts.map(f=>[f[0],f[1]]);
   const glitched=c.facts.map((f,i)=>[f[0],changed.includes(i)?f[2]:f[1]]);
   const cards={};
@@ -192,7 +241,7 @@ function scoreAgendas(agendas,first,final,ids,options){
   return {counts,firstCounts:fc,chosen,top,results};
 }
 function buildRules(){
-  const kind=ruleKind==="mix"?(rnd(2)?"word":"number"):ruleKind;
+  const rk=cfg("rules").kind;const kind=rk==="mix"?(rnd(2)?"word":"number"):rk;
   const pool=C.rules[kind];const rule=pickRound("rules-"+kind,pool);
   const decoys=shuffle(pool.filter(r=>r.id!==rule.id)).slice(0,5);
   const opts=shuffle([rule].concat(decoys));
@@ -213,7 +262,7 @@ function cardFront(c){
     const ul=el("ul",{class:"facts"});c.facts.forEach(f=>ul.append(el("li",null,el("b",{text:f[0]}),el("span",{text:f[1]}))));
     return {front:el("div",{style:"display:flex;flex-direction:column;gap:10px;width:100%;align-items:flex-start;text-align:left"},
       el("span",{class:"label",text:"Case file"}),el("span",{class:"case-title",text:c.title}),ul,
-      el("span",{class:"hint",style:"font-size:.8rem",text:"One file has two wrong details. It might be yours."})),odd:false,tall:true};
+      el("span",{class:"hint",style:"font-size:.8rem",text:"One file has some wrong details. It might be yours."})),odd:false,tall:true};
   }
   if(c.kind==="copycat"||c.kind==="agenda"){
     return {front:el("div",{style:"display:flex;flex-direction:column;gap:12px;align-items:center"},
@@ -328,10 +377,8 @@ function openSetup(){
   $("playersPanel").hidden=!local;
   $("packPanel").hidden=curGame!=="flaugin";
   $("hintRow").hidden=curGame!=="flaugin";
-  $("timerRow").hidden=!G.timer;$("timerLabel").textContent=G.timerLabel;
-  $("segRow").hidden=!G.seg;$("segLabel").textContent=G.seg||"";
-  $("fibNote").hidden=!G.seg;
-  $("kindRow").hidden=curGame!=="rules";
+  $("timerRow").hidden=true;$("segRow").hidden=true;$("fibNote").hidden=true;$("kindRow").hidden=true;
+  renderCfg();
   $("setupTitle").textContent=local?"Who's at the table?":"Set up the big screen";
   $("setupSub").textContent=local?G.sub.local:G.sub.host;
   const ol=$("rulesList");ol.textContent="";G.rules.forEach(r=>ol.append(el("li",{text:r})));
@@ -368,6 +415,31 @@ function renderFibs(){
   $("fibNote").className="status";
   $("fibNote").textContent=mode==="local"?(players.length>=6?"":"Two "+what+" unlocks at 6 players."):"Two "+what+" kicks in only when 6 or more phones join.";
 }
+function segRow(label,opts,cur,onPick,note){
+  const seg=el("div",{class:"seg",role:"group","aria-label":label});
+  opts.forEach(([v,t,dis])=>seg.append(el("button",{type:"button","aria-pressed":String(v===cur),disabled:dis?"":null,text:t,onclick:()=>{onPick(v);renderCfg()}})));
+  const row=el("div",{class:"cfg-row"},el("span",{class:"cfg-label",text:label}),seg);
+  return note?el("div",{class:"cfg-block"},row,el("p",{class:"status",style:"margin:0",text:note})):row;
+}
+function renderCfg(){
+  const box=$("cfgRows");if(!box)return;box.textContent="";
+  const g=curGame,c=cfg(g),G=GAMES[g];const set=(k)=>v=>setCfg(g,k,v);
+  const timerOpts=g==="rules"?[[0,"None"],[120,"2 min"],[180,"3 min"],[300,"5 min"]]:[[0,"Off"],[60,"1 min"],[90,"1½"],[120,"2 min"],[180,"3 min"],[300,"5 min"]];
+  if(g!=="rules"){
+    box.append(segRow("Card study time",[[0,"Off"],[15,"15 sec"],[30,"30 sec"],[45,"45 sec"],[60,"1 min"]],c.study,set("study"),mode==="local"?"Used in TV rooms. With one phone, each person reads as they pass.":"Phones get this long to study their cards, then the round starts by itself."));
+    box.append(segRow("Each player's turn",[[0,"Off"],[30,"30 sec"],[60,"1 min"],[90,"1½ min"],[120,"2 min"]],c.turn,set("turn"),"Everyone gets their own turn to talk or plead their case, in a random order. The clock moves to the next player by itself."));
+  }
+  box.append(segRow(g==="rules"?"Round time limit":c.turn>0&&g!=="rules"?"Open talk after the turns":(g==="copycat"||g==="agenda"?"Debate timer":g==="glitch"?"Investigation timer":"Talk timer"),timerOpts,c.timer,set("timer"),g==="rules"?"A 10-second countdown opens the gate.":"A 10-second countdown starts the talking. Every timer has a Skip button."));
+  if(G.seg){
+    const few=mode==="local"&&players.length<6;
+    box.append(segRow(G.seg,[[1,"One"],[2,"Two",few]],few?1:c.count,set("count"),mode==="local"?(few?"Two unlocks at 6 players.":""):"Two only kicks in when 6 or more phones join."));
+  }
+  if(g==="glitch")box.append(segRow("Details changed",[[1,"1 (hard)"],[2,"2"],[3,"3 (easy)"]],c.details,set("details")));
+  if(g==="rules"){
+    box.append(segRow("The gate tests",[["word","Words"],["number","Numbers"],["mix","Mix"]],c.kind,set("kind")));
+    box.append(segRow("Guesses each",[[1,"1"],[2,"2"],[3,"3"]],c.guesses,set("guesses")));
+  }
+}
 function renderKind(){document.querySelectorAll("[data-kind]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.kind===ruleKind)));document.querySelectorAll("[data-voice]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.voice===ANN.voice())))}
 document.querySelectorAll("[data-voice]").forEach(b=>b.onclick=()=>{ANN.setVoice(b.dataset.voice);renderKind()});
 document.querySelectorAll("[data-fibs]").forEach(b=>b.onclick=()=>{fibs=Number(b.dataset.fibs);store.set("fibs",fibs);renderFibs()});
@@ -390,17 +462,17 @@ function startLocalRound(){
   keepAwake();
   roundNo++;store.set("round",roundNo);
   const ids=players.map((_,i)=>String(i));
-  const count=players.length>=6?fibs:1;
+  const count=oddCount(players.length,curGame);
   if(curGame==="flaugin"){
     const pid=resolvePack();const pool=poolFor(pid);const word=pool[rnd(pool.length)];markUsed(pid,word);
     const fibIdx=pickFakers(players,count);
     game={type:"flaugin",pid,word,fibIdx,turn:0,deal:shuffle(players.map((_,i)=>i)),voted:null};
   }else{
-    const oddIdx=pickFakers(players,count,"recent:"+curGame);
+    const oddIdx=pickFakers(players,count);
     const b=curGame==="copycat"?buildCopycat(ids,oddIdx):buildGlitch(ids,oddIdx);
     game={type:curGame,built:b,fibIdx:oddIdx,turn:0,deal:shuffle(players.map((_,i)=>i)),voted:null};
   }
-  setTag(GAMES[curGame].name+" · Round "+roundNo);FX.play("deal");ANN.round(roundNo);showPass();
+  setTag(GAMES[curGame].name+" · Round "+roundNo);if(!Music.sting("deal"))FX.play("deal");ANN.round(roundNo);showPass();
 }
 function localCard(i){
   if(game.type==="flaugin"){const isFib=game.fibIdx.includes(i);return {isFib,word:game.word,pack:(!isFib||$("optHint").checked)?PACKS[game.pid].name:null,twoFibs:game.fibIdx.length>1}}
@@ -417,25 +489,37 @@ function showPass(){
   show("vPass");
 }
 $("passNext").onclick=()=>{game.turn++;FX.play("swoosh");if(game.turn<players.length)showPass();else showClues()};
-let tLeft=120,tInt=null;
-function timerLen(){return GAMES[game?game.type:curGame].timer||120}
-function resetTimer(){clearInterval(tInt);tInt=null;tLeft=timerLen();$("timer").textContent=fmt(tLeft);$("timerBtn").textContent="Start timer"}
-$("timerBtn").onclick=()=>{
-  if(tInt){clearInterval(tInt);tInt=null;$("timerBtn").textContent="Resume";return}
-  $("timerBtn").textContent="Pause";
-  tInt=setInterval(()=>{tLeft--;$("timer").textContent=fmt(tLeft);$("timer").classList.toggle("hurry",tLeft>0&&tLeft<=10);if(tLeft===10)ANN.line("hurry");else if(tLeft>0&&tLeft<=3)ANN.count(tLeft);else if(tLeft>0&&tLeft<10)FX.play("tick");if(tLeft<=0){FX.play("buzzer");ANN.line("timeout");$("timer").classList.remove("hurry");clearInterval(tInt);tInt=null;$("timer").textContent="Vote!";$("timerBtn").textContent="Start timer";tLeft=timerLen()}},1000);
-};
-$("timerReset").onclick=resetTimer;
+let LC=null,tInt=null;
+function resetTimer(){clearInterval(tInt);tInt=null;LC=null}
+function localClockRender(){
+  const g=clockSeg(LC);const [no,n]=turnInfo(LC);
+  $("timerHead").textContent=g&&g.k==="turn"?"Turn "+no+" of "+n:g&&g.k==="count"?"Starting in":"Timer";
+  $("timerTitle").textContent=clockTitle(g,game.type,w=>w);
+  const left=g?Math.max(0,(LC.endsAt-Date.now())/1000):0;
+  $("timer").textContent=fmt(left);$("timer").classList.toggle("hurry",!!g&&left>0&&left<=10&&g.k!=="count");
+  const nx=nextSpeaker(LC);$("timerNext").textContent=g?(nx?"Up next: "+nx:""):"Time to vote!";
+  $("timerBtn").hidden=$("timerReset").hidden=!g;
+  $("timerBtn").textContent=!g?"":g.k==="count"?"Skip countdown":g.k==="turn"?(nx?"Next player":"End turns"):"Skip timer";
+  $("orderList").querySelectorAll("li").forEach(li=>li.classList.toggle("now",!!g&&g.k==="turn"&&li.textContent===g.who));
+}
+function localClockStart(order){
+  resetTimer();LC=newClock(buildSeq(game.type,"clues",order));localClockRender();
+  tInt=setInterval(()=>{if(!LC||$("vClues").hidden)return;
+    if(clockTick(LC,true)){clockGo(LC,LC.i+1);const g=clockSeg(LC);if(g&&g.k==="turn")FX.play("pop");if(!g){clearInterval(tInt);tInt=null}}
+    localClockRender()},250);
+}
+$("timerBtn").onclick=()=>{if(!LC)return;FX.play("swoosh");clockGo(LC,LC.i+1);if(LC.done){clearInterval(tInt);tInt=null}localClockRender()};
+$("timerReset").onclick=()=>{const g=clockSeg(LC);if(!g)return;LC.endsAt=Math.max(Date.now(),LC.endsAt)+30000;LC.lastSec=null;localClockRender()};
 function showClues(){
-  const start=rnd(players.length);const ol=$("orderList");ol.textContent="";
-  for(let k=0;k<players.length;k++)ol.append(el("li",{text:players[(start+k)%players.length]}));
+  const ol=$("orderList");ol.textContent="";
+  const order=shuffle(players);order.forEach(n=>ol.append(el("li",{text:n})));
   const tp=$("talkPrompt");tp.textContent="";
   if(game.type==="flaugin"){$("talkTitle").textContent="Clue round";$("talkSub").textContent="One word each, in this order. Not too obvious, not too vague.";tp.hidden=true}
   else if(game.type==="copycat"){$("talkTitle").textContent="Debate time";$("talkSub").textContent="Everyone weighs in, in this order, then talk freely. Sneak in your mission!";tp.hidden=false;tp.append(el("h3",{text:"The topic"}),el("p",{class:"prompt",text:game.built.meta.prompt}))}
   else{$("talkTitle").textContent="Investigate";$("talkSub").textContent="Take turns asking each other questions about the case. Don’t read your file out loud!";tp.hidden=false;tp.append(el("h3",{text:"The case"}),el("p",{class:"prompt",text:game.built.meta.title}),el("p",{class:"scene",text:game.built.meta.scene}))}
-  $("timerPanel").hidden=!$("optTimer").checked;resetTimer();show("vClues");FX.play("whoosh");ANN.readySetGo();
+  show("vClues");localClockStart(order);FX.play("whoosh");ANN.say("ready");
 }
-$("toVote").onclick=()=>{resetTimer();showVote()};
+$("toVote").onclick=()=>{resetTimer();showVote();Music.sync();if(!Music.sting("vote"))FX.play("pop")};
 function showVote(){
   game.voted=null;const g=$("voteGrid");g.textContent="";
   players.forEach((n,i)=>{const b=el("button",{type:"button",text:n,"aria-pressed":"false"});
@@ -485,7 +569,7 @@ function finishLocalOdd(v){
 function drumThen(win,verdictEl,skipDrum){
   if(verdictEl){verdictEl.classList.remove("big-in");void verdictEl.offsetWidth;verdictEl.classList.add("big-in")}
   FX.play("drum",0.85);ANN.clear();
-  setTimeout(()=>{FX.play(win?"win":"lose");ANN.line(win?"win":"lose");if(win)FX.confetti()},900);
+  setTimeout(()=>{if(!(win&&Music.sting(Math.random()<0.5?"win":"win2")))FX.play(win?"win":"lose");ANN.line(win?"win":"lose");if(win)FX.confetti()},900);
 }
 $("nextRound").onclick=startLocalRound;
 $("toSetup").onclick=()=>{setTag(GAMES[curGame].name);openSetup()};
@@ -536,6 +620,10 @@ function resumeRoom(h){
   ch.on("presence",{event:"sync"},()=>{noteJoins();renderHost()})
     .on("presence",{event:"join"},()=>broadcast())
     .on("broadcast",{event:"hello"},()=>broadcast())
+    .on("broadcast",{event:"skip"},({payload})=>{   // the player whose turn it is tapped "I'm done"
+      const p=payload||{};const g=H&&clockSeg(H.clock);
+      if(g&&g.k==="turn"&&g.who===p.pid&&p.i===H.clock.i)hostClockNext(true);
+    })
     .on("broadcast",{event:"ready"},({payload})=>{
       const p=payload||{};if(!H||!inRoster(p.pid)||p.round!==H.round)return;
       if(!H.ready[p.pid]){H.ready[p.pid]=true;FX.play("pop");broadcast();renderHost()}
@@ -558,16 +646,52 @@ function resumeRoom(h){
     });
   clearInterval(hostBeat);hostBeat=setInterval(broadcast,4000);
   clearInterval(hostKeep);hostKeep=setInterval(()=>{if(H)api({action:"touch",code:H.code,hostToken:H.hostToken}).catch(()=>{})},10*60*1000);
-  clearInterval(hostTick);hostTick=setInterval(()=>{if(H&&(H.phase==="clues"||H.phase==="talk")&&H.endsAt){
-    const left=(H.endsAt-Date.now())/1000;const t=$("hostTimer");
-    if(t){t.textContent=left>0?fmt(left):"Time!";t.classList.toggle("hurry",left>0&&left<=10)}
-    const sec=Math.ceil(left);
-    if(sec!==H.lastSec){H.lastSec=sec;if(mode==="host"){
-      if(sec===10)ANN.line("hurry");else if(sec>0&&sec<=3)ANN.count(sec);else if(sec>0&&sec<10)FX.play("tick");
-      else if(sec===0){FX.play("buzzer");ANN.line("timeout")}}}
-  }},250);
+  clearInterval(hostTick);hostTick=setInterval(hostClockTick,250);
   mode="host";setTag(GAMES[H.game].name+" · Room "+H.code);show("vHost");renderHost();
 }
+function hostClockTick(){
+  if(!H||!H.clock)return;
+  const g=clockSeg(H.clock);if(!g)return;
+  const left=(H.clock.endsAt-Date.now())/1000;const t=$("hostTimer");
+  if(t){t.textContent=left>0?fmt(left):"0:00";t.classList.toggle("hurry",left>0&&left<=10&&g.k!=="count")}
+  if(clockTick(H.clock,mode==="host"))hostClockNext(false);
+}
+/* Move to the next stretch: by itself when time runs out, or when someone presses Skip. */
+function hostClockNext(skipped){
+  if(!H||!H.clock)return;
+  if(skipped)FX.play("swoosh");
+  if(H.phase==="cards"){const nx=H.game==="flaugin"?"clues":"talk";if(H.clock.i>=H.clock.seq.length-1)return setPhase(nx)}
+  const ok=clockGo(H.clock,H.clock.i+1);H.endsAt=H.clock.endsAt;
+  if(ok){const g=clockSeg(H.clock);if(g.k==="turn"&&mode==="host"){FX.play("pop")}}
+  if(H.phase==="cards"&&H.clock.done)return setPhase(H.game==="flaugin"?"clues":"talk");
+  broadcast();renderHost();
+}
+function clockPublic(){
+  const C=H.clock;if(!C||!C.seq.length)return null;const g=clockSeg(C);const [no,n]=turnInfo(C);
+  return {i:C.i,k:g?g.k:"done",who:g&&g.who||null,turnNo:no,turnN:n,next:nextSpeaker(C)};
+}
+function clockPanel(){
+  const C=H.clock;if(!C||!C.seq.length)return null;
+  const g=clockSeg(C);const [no,n]=turnInfo(C);
+  const p=el("div",{class:"panel clock-panel"+(g&&g.k==="turn"?" turn":"")},el("h3",{text:g&&g.k==="turn"?"Turn "+no+" of "+n:g&&g.k==="count"?"Starting in":"Timer"}));
+  p.append(el("p",{class:"clock-title",text:clockTitle(g,H.game,nameOf)}));
+  p.append(el("div",{class:"timer",id:"hostTimer",text:g?fmt(Math.max(0,(C.endsAt-Date.now())/1000)):"0:00"}));
+  const nx=nextSpeaker(C);
+  if(g&&nx&&g.k!=="study")p.append(el("p",{class:"sub",style:"margin:0",text:"Up next: "+nameOf(nx)}));
+  if(!g)p.append(el("p",{class:"sub",style:"margin:0",text:H.game==="rules"?"Reveal the rule when you're ready.":"Vote when you're ready."}));
+  if(g){
+    const skipText=g.k==="study"?"Skip, start now":g.k==="count"?"Skip countdown":g.k==="turn"?(nx?"Next player":"End turns"):"Skip timer";
+    p.append(el("div",{class:"row"},el("button",{class:"btn-felt",text:skipText,onclick:()=>hostClockNext(true)}),
+      el("button",{class:"btn-ghost",text:"+30 sec",onclick:()=>{C.endsAt=Math.max(Date.now(),C.endsAt)+30000;H.endsAt=C.endsAt;C.lastSec=null;broadcast();renderHost()}})));
+  }
+  return p;
+}
+function orderList(){
+  const g=clockSeg(H.clock);const ol=el("ol",{class:"order"});
+  H.order.forEach(pid=>ol.append(el("li",{class:g&&g.k==="turn"&&g.who===pid?"now":null,text:nameOf(pid)})));
+  return ol;
+}
+const add=(box,...kids)=>kids.forEach(k=>{if(k)box.append(k)});
 function saveHost(){store.set("host",{code:H.code,hostToken:H.hostToken,at:Date.now(),scores:H.scores,names:H.names,round:H.round,srv:SRV})}
 function phones(){
   if(!ch)return [];
@@ -583,15 +707,15 @@ function nameOf(pid){const r=H&&H.roster.find(x=>x.pid===pid);return r?r.name:(H
 function publicState(){
   const showSecret=H.phase==="result"||(H.phase==="guess"&&H.showWord);
   return {code:H.code,game:H.game,epoch:H.epoch,phase:H.phase,round:H.round,roster:H.roster,order:H.order,voteRound:H.voteRound,
-    ready:Object.keys(H.ready),voted:Object.keys(H.votes),votedOut:H.voted,outcome:H.outcome,endsAt:H.endsAt,showWord:H.showWord,
+    ready:Object.keys(H.ready),voted:Object.keys(H.votes),votedOut:H.voted,outcome:H.outcome,endsAt:H.endsAt,clock:clockPublic(),showWord:H.showWord,
     word:H.game==="flaugin"&&showSecret?H.word:null,fib:H.game==="flaugin"&&H.phase==="result"?H.fib:null,
     meta:H.meta,firstIn:Object.keys(H.first),finalIn:Object.keys(H.final),
-    log:H.game==="rules"?H.log.slice(-12):null,solved:H.solved,guesses:H.guesses,
+    log:H.game==="rules"?H.log.slice(-12):null,solved:H.solved,guesses:H.guesses,maxGuesses:H.maxGuesses||2,
     reveal:H.phase==="result"?H.reveal:null,
     scores:H.roster.map(r=>[r.pid,H.scores[r.pid]||0])};
 }
 function broadcast(){if(ch&&H)ch.send({type:"broadcast",event:"state",payload:publicState()}).catch(()=>{})}
-function setPhase(p){const prev=H.phase;H.phase=p;H.epoch=Date.now();H.lastSec=null;broadcast();renderHost();saveHost();Music.sync();if(mode==="host")phaseFx(p,prev)}
+function setPhase(p){const prev=H.phase;H.phase=p;H.epoch=Date.now();H.lastSec=null;H.clock=newClock(buildSeq(H.game,p,H.order));H.endsAt=H.clock.endsAt;broadcast();renderHost();saveHost();Music.sync();if(mode==="host")phaseFx(p,prev)}
 function noteJoins(){
   if(!H)return;let any=false;
   phones().forEach(p=>{if(!H.known.has(p.pid)){H.known.add(p.pid);if(H.knownInit){H.fresh[p.pid]=Date.now();any=true}}});
@@ -604,13 +728,13 @@ function hostWon(){
   return true;
 }
 function phaseFx(p,prev){
-  if(p==="cards"){FX.play("deal");ANN.round(H.round)}
-  else if(p==="play"){FX.play("deal");ANN.round(H.round);setTimeout(()=>ANN.say("go"),900)}
-  else if(p==="clues"||p==="talk"){FX.play("whoosh");ANN.readySetGo()}
-  else if(p==="vote"||p==="final"){FX.play("pop")}
+  if(p==="cards"){if(!Music.sting("deal"))FX.play("deal");ANN.round(H.round)}
+  else if(p==="play"){if(!Music.sting("deal"))FX.play("deal");ANN.round(H.round)}
+  else if(p==="clues"||p==="talk"){FX.play("whoosh");ANN.say("ready")}
+  else if(p==="vote"||p==="final"){if(!Music.sting("vote"))FX.play("pop")}
   else if(p==="guess"||p==="result"){
     const win=hostWon();FX.play("drum",0.85);ANN.clear();
-    setTimeout(()=>{FX.play(win?"win":"lose");
+    setTimeout(()=>{if(!(win&&Music.sting(Math.random()<0.5?"win":"win2")))FX.play(win?"win":"lose");
       if(H.game==="agenda")ANN.line("agenda");else ANN.line(win?"win":"lose");
       if(win)FX.confetti()},900);
   }
@@ -621,8 +745,17 @@ function buildRoster(){
   const seen={};
   return phones().slice(0,30).map(p=>{let n=p.name||"Player";const k=n.toLowerCase();seen[k]=(seen[k]||0)+1;if(seen[k]>1)n=n+" "+seen[k];return {pid:p.pid,name:n}});
 }
+/* Same fairness on the TV, across every game tonight. */
+function oddWeights(ids){
+  H.oddCounts=H.oddCounts||{};H.oddRecent=H.oddRecent||[];
+  const minC=Math.min(...ids.map(id=>H.oddCounts[id]||0));const w={};
+  ids.forEach(id=>{w[id]=(H.oddRecent[0]&&H.oddRecent[0].includes(id)?0.12:H.oddRecent[1]&&H.oddRecent[1].includes(id)?0.45:1)/(1+1.6*((H.oddCounts[id]||0)-minC))});
+  return w;
+}
+function noteOdd(ids){H.oddCounts=H.oddCounts||{};ids.forEach(id=>H.oddCounts[id]=(H.oddCounts[id]||0)+1);H.oddRecent=[ids.slice()].concat(H.oddRecent||[]).slice(0,3)}
 function pickOddHost(ids,count){
-  const pool=ids.map((id,i)=>({i,w:H.lastOdd.includes(id)?0.2:1}));const out=[];
+  const W=oddWeights(ids);
+  const pool=ids.map((id,i)=>({i,w:W[id]}));const out=[];
   while(out.length<count&&pool.length){const total=pool.reduce((t,x)=>t+x.w,0);let r=(rnd(1e6)/1e6)*total,k=0;for(;k<pool.length-1;k++){r-=pool[k].w;if(r<0)break}out.push(pool[k].i);pool.splice(k,1)}
   return out;
 }
@@ -632,7 +765,7 @@ async function hostDeal(){
   try{
     if(H.game==="flaugin"){
       const pid=resolvePack();
-      const r=await api({action:"deal",code:H.code,hostToken:H.hostToken,playerIds:ids,words:poolFor(pid),pack:PACKS[pid].name,hint:$("optHint").checked,fibs});
+      const r=await api({action:"deal",code:H.code,hostToken:H.hostToken,playerIds:ids,words:poolFor(pid),pack:PACKS[pid].name,hint:$("optHint").checked,fibs:oddCount(ids.length,"flaugin"),weights:oddWeights(ids)});
       H.roster=roster;roster.forEach(x=>H.names[x.pid]=x.name);freshRound();
       H.round=r.round;H.packId=pid;H.hint=$("optHint").checked;
     }else if(H.game==="rules"){
@@ -642,13 +775,13 @@ async function hostDeal(){
       const lookup=id=>(roster.find(x=>x.pid===id)||{}).name||"someone";
       let b;
       if(H.game==="agenda")b=buildAgenda(ids,lookup);
-      else{const oddIdx=pickOddHost(ids,oddCount(ids.length));b=H.game==="copycat"?buildCopycat(ids,oddIdx):buildGlitch(ids,oddIdx)}
+      else{const oddIdx=pickOddHost(ids,oddCount(ids.length,H.game));b=H.game==="copycat"?buildCopycat(ids,oddIdx):buildGlitch(ids,oddIdx)}
       const r=await api({action:"dealCards",code:H.code,hostToken:H.hostToken,game:H.game,cards:b.cards});
       H.roster=roster;roster.forEach(x=>H.names[x.pid]=x.name);freshRound();
-      H.round=r.round;H.meta=b.meta;H.secret=b.secret;if(b.secret.odd)H.lastOdd=b.secret.odd;
+      H.round=r.round;H.meta=b.meta;H.secret=b.secret;if(b.secret.odd){H.lastOdd=b.secret.odd;noteOdd(b.secret.odd)}
     }
-    H.timerOn=$("optTimer").checked;
-    const start=rnd(roster.length);H.order=roster.map((_,k)=>roster[(start+k)%roster.length].pid);
+    H.timerSecs=cfg(H.game).timer;H.timerOn=H.timerSecs>0;H.maxGuesses=cfg("rules").guesses;
+    H.order=shuffle(roster.map(r=>r.pid));
     setTag(G.name+" · Room "+H.code+" · Round "+H.round);H.err="";
     setPhase(H.game==="rules"?"play":"cards");
   }catch(e){H.err=e.message;renderHost()}
@@ -671,7 +804,7 @@ async function hostReveal(force){
     return setPhase("result");
   }
   H.voted=top[0];
-  try{const r=await api({action:"reveal",code:H.code,hostToken:H.hostToken});H.word=r.word;H.fib=r.fib;markUsed(H.packId,r.word)}
+  try{const r=await api({action:"reveal",code:H.code,hostToken:H.hostToken});H.word=r.word;H.fib=r.fib;markUsed(H.packId,r.word);noteOdd(r.fib)}
   catch(e){H.err=e.message;renderHost();return}
   H.err="";
   if(H.fib.includes(H.voted))setPhase("guess");else hostFinish("escaped");
@@ -702,7 +835,7 @@ function onTry(p){
 }
 function onGuess(p){
   if(!H||H.game!=="rules"||H.phase!=="play"||!inRoster(p.pid)||p.round!==H.round)return;
-  if(H.solved.includes(p.pid)||(H.guesses[p.pid]||0)>=2)return;
+  if(H.solved.includes(p.pid)||(H.guesses[p.pid]||0)>=(H.maxGuesses||2))return;
   const choice=Number(p.choice);if(!(choice>=0&&choice<H.meta.options.length))return;
   H.guesses[p.pid]=(H.guesses[p.pid]||0)+1;
   if(choice===H.secret.answer){const first=H.solved.length===0;H.rp[p.pid]=first?5:2;H.solved.push(p.pid);FX.play("solve");ANN.line(first?"first":"solved")}else FX.play("reject")
@@ -726,11 +859,6 @@ function gameSwitcher(){
   const row=el("div",{class:"switcher",role:"group","aria-label":"Choose a game"});
   Object.keys(GAMES).forEach(g=>row.append(el("button",{type:"button","aria-pressed":String(H.game===g),text:GAMES[g].name,onclick:()=>{setGame(g);H.game=g;H.phase="lobby";H.epoch=Date.now();setTag(GAMES[g].name+" · Room "+H.code);broadcast();renderHost()}})));
   return row;
-}
-function timerPanel(){
-  const secs=GAMES[H.game].timer;
-  return el("div",{class:"panel"},el("h3",{text:"Talk it over"}),el("div",{class:"timer",id:"hostTimer",text:H.endsAt?fmt((H.endsAt-Date.now())/1000):fmt(secs)}),
-    el("button",{class:"btn-felt",text:H.endsAt?"Restart the timer":"Start the "+fmt(secs)+" timer",onclick:()=>{H.endsAt=Date.now()+secs*1000;broadcast();renderHost()}}));
 }
 function scoreboard(){
   const body=el("tbody");renderScoreTable(body,H.roster.map(r=>[r.name,H.scores[r.pid]||0]),true);
@@ -782,14 +910,13 @@ function renderHostFlaugin(main,side){
     main.append(el("p",{class:"big-msg",text:"Check your phones."}),el("p",{class:"sub",text:"Press and hold your card to peek. Don't let anyone see!"}));
     main.append(el("div",{class:"panel"},el("h3",{text:"Seen their card · "+n+" of "+H.roster.length}),chipsFor(H.roster,r=>H.ready[r.pid])));
     main.append(el("button",{class:"btn-big",text:n===H.roster.length?"Everyone's ready. Start clues":"Start clues",onclick:()=>{H.endsAt=0;setPhase("clues")}}));
-    side.append(joinCard());return;
+    add(side,clockPanel(),joinCard());return;
   }
   if(H.phase==="clues"){
     main.append(el("p",{class:"big-msg",text:"One word each, in this order."}));
-    const ol=el("ol",{class:"order"});H.order.forEach(p=>ol.append(el("li",{text:nameOf(p)})));
-    main.append(el("div",{class:"panel"},el("h3",{text:"Speaking order"}),ol));
+    main.append(el("div",{class:"panel"},el("h3",{text:"Speaking order"}),orderList()));
     main.append(el("button",{class:"btn-big",text:"Time to vote",onclick:()=>{H.voteRound++;H.votes={};H.endsAt=0;setPhase("vote")}}));
-    if(H.timerOn)side.append(timerPanel());
+    add(side,clockPanel());
     if(H.hint)side.append(el("div",{class:"panel"},el("h3",{text:"Pack"}),el("p",{style:"margin:0;font-size:1.2rem;font-weight:800",text:PACKS[H.packId].name})));
     return;
   }
@@ -829,14 +956,14 @@ function renderHostOdd(main,side){
     main.append(el("p",{class:"big-msg",text:copy?"Check your secret mission.":"Read your case file."}),el("p",{class:"sub",text:"Press and hold your card on your phone. Don't let anyone see!"}));
     main.append(el("div",{class:"panel"},el("h3",{text:"Ready · "+n+" of "+H.roster.length}),chipsFor(H.roster,r=>H.ready[r.pid])));
     main.append(el("button",{class:"btn-big",text:n===H.roster.length?(copy?"Everyone's ready. Start the debate":"Everyone's ready. Start investigating"):(copy?"Start the debate":"Start investigating"),onclick:()=>{H.endsAt=0;setPhase("talk")}}));
-    side.append(prompt(),joinCard());return;
+    add(side,clockPanel(),prompt(),joinCard());return;
   }
   if(H.phase==="talk"){
     main.append(prompt());
-    if(copy){const ol=el("ol",{class:"order"});H.order.forEach(p=>ol.append(el("li",{text:nameOf(p)})));main.append(el("div",{class:"panel"},el("h3",{text:"Everyone weighs in, in this order"}),ol))}
-    else main.append(el("div",{class:"panel"},el("h3",{text:"How to investigate"}),el("p",{style:"margin:0",text:"Ask each other questions like “What time did it happen?” Answer honestly from your own file. One file has two wrong details, and nobody knows whose."})));
+    if(copy||cfg(H.game).turn>0)main.append(el("div",{class:"panel"},el("h3",{text:copy?"Everyone weighs in, in this order":"Turn order"}),orderList()));
+    if(!copy)main.append(el("div",{class:"panel"},el("h3",{text:"How to investigate"}),el("p",{style:"margin:0",text:"Ask each other questions like “What time did it happen?” Answer honestly from your own file. One file has some wrong details, and nobody knows whose."})));
     main.append(el("button",{class:"btn-big",text:"Time to vote",onclick:()=>{H.voteRound++;H.votes={};H.endsAt=0;setPhase("vote")}}));
-    if(H.timerOn)side.append(timerPanel());
+    add(side,clockPanel());
     return;
   }
   if(H.phase==="vote"){renderVote(main,side,copy?"Who’s the Copycat? Vote on your phone.":"Whose file is glitched? Vote on your phone.");side.prepend(prompt());return}
@@ -858,12 +985,13 @@ function renderHostAgenda(main,side){
     main.append(el("p",{class:"big-msg",text:"Check your secret agenda."}),el("p",{class:"sub",text:"Then make your secret first pick on your phone: what you'd really choose right now."}));
     main.append(el("div",{class:"panel"},el("h3",{text:"First picks in · "+n+" of "+H.roster.length}),chipsFor(H.roster,r=>H.first[r.pid]!=null)));
     main.append(el("button",{class:"btn-big",text:n===H.roster.length?"Everyone's in. Start the debate":"Start the debate",onclick:()=>{H.endsAt=0;setPhase("talk")}}));
-    side.append(prompt(),joinCard());return;
+    add(side,clockPanel(),prompt(),joinCard());return;
   }
   if(H.phase==="talk"){
     main.append(prompt(),el("div",{class:"panel"},el("h3",{text:"Debate and negotiate"}),el("p",{style:"margin:0",text:"Make your case. Make deals. Change minds. Just don't reveal your agenda!"})));
+    if(cfg("agenda").turn>0)main.append(el("div",{class:"panel"},el("h3",{text:"Everyone pleads their case, in this order"}),orderList()));
     main.append(el("button",{class:"btn-big",text:"Final vote",onclick:()=>{H.voteRound++;H.final={};H.endsAt=0;setPhase("final")}}));
-    if(H.timerOn)side.append(timerPanel());
+    add(side,clockPanel());
     return;
   }
   if(H.phase==="final"){
@@ -913,8 +1041,9 @@ function renderHostRules(main,side){
       last?el("span",{style:"color:var(--on-bg-dim)",text:"from "+last.name}):null);
     main.append(el("p",{class:"eyebrow",text:"The gate has a secret rule"}),el("p",{class:"big-msg",text:"Type "+(m.kind==="number"?"numbers":"words")+" on your phone to test it."}),gate);
     main.append(el("div",{class:"panel"},el("h3",{text:"How to crack it"}),el("p",{style:"margin:0",text:m.kind==="number"?"Try all kinds of numbers: small, big, even, odd, ones with repeating digits. Watch what gets through.":"Try all kinds of words: short, long, silly, ones with double letters. Watch what gets through."})));
-    const done=H.roster.every(r=>H.solved.includes(r.pid)||(H.guesses[r.pid]||0)>=2);
+    const done=H.roster.every(r=>H.solved.includes(r.pid)||(H.guesses[r.pid]||0)>=(H.maxGuesses||2));
     main.append(el("button",{class:"btn-big",text:done?"Everyone's done. Reveal the rule":"Reveal the rule",onclick:rulesReveal}));
+    add(side,clockPanel());
     side.append(el("div",{class:"panel"},el("h3",{text:"Everything tried · "+H.log.length}),H.log.length?logList(H.log.slice(-16)):el("p",{class:"sub",text:"Nothing yet."})));
     side.append(el("div",{class:"panel"},el("h3",{text:"Rule crackers"}),H.solved.length?el("ol",{class:"order"},...H.solved.map((p,i)=>el("li",{text:nameOf(p)+(i===0?" (+5)":" (+2)")}))):el("p",{class:"sub",text:"Nobody yet. Pick the rule on your phone when you know it."})));
     return;
@@ -1029,6 +1158,18 @@ async function fetchCard(){
   catch(e){P.cardErr=e.message}
   finally{P.fetching=false;renderPlayer()}
 }
+function playerClock(s){
+  const c=s.clock;if(!c)return null;
+  const g=c.k==="done"?null:{k:c.k,who:c.who};
+  const box=el("div",{class:"panel clock-panel"+(c.k==="turn"&&c.who===P.pid?" mine":"")});
+  box.append(el("h3",{text:c.k==="turn"?"Turn "+c.turnNo+" of "+c.turnN:c.k==="count"?"Starting in":"Timer"}),el("p",{class:"clock-title",text:clockTitle(g,s.game,pid=>rosterName(s,pid),P.pid)}));
+  if(g){const t=el("div",{class:"timer"});const upd=()=>{const left=(s.endsAt-Date.now())/1000;t.textContent=left>0?fmt(left):"0:00";t.classList.toggle("hurry",left>0&&left<=10&&c.k!=="count")};upd();clearInterval(pTimer);pTimer=setInterval(upd,500);box.append(t)}
+  if(c.k==="turn"&&c.who===P.pid){
+    if(!P.myTurnBuzz||P.myTurnBuzz!==s.epoch+":"+c.i){P.myTurnBuzz=s.epoch+":"+c.i;FX.vibrate([60,40,60])}
+    box.append(el("button",{class:"btn-felt",text:"I'm done",onclick:()=>{if(ch)ch.send({type:"broadcast",event:"skip",payload:{pid:P.pid,i:c.i}}).catch(()=>{});FX.play("swoosh")}}));
+  }else if(c.next===P.pid&&c.k!=="study")box.append(el("p",{class:"sub",style:"margin:0",text:"You're up next!"}));
+  return box;
+}
 function sendReady(){if(ch&&P.state)ch.send({type:"broadcast",event:"ready",payload:{pid:P.pid,round:P.state.round}}).catch(()=>{})}
 function sendVote(){if(ch&&P.vote)ch.send({type:"broadcast",event:"vote",payload:{pid:P.pid,r:P.vote.r,target:P.vote.target}}).catch(()=>{})}
 function sendPick(kind,o){if(ch&&P.state)ch.send({type:"broadcast",event:"pick",payload:{pid:P.pid,round:P.state.round,kind,option:o,r:P.state.voteRound}}).catch(()=>{})}
@@ -1072,7 +1213,7 @@ function renderPlayerInner(){
     return el("p",{class:"status on-felt",text:"Dealing your card…"});
   };
   const peekAgain=()=>el("details",{class:"panel"},el("summary",{style:"font-weight:800;cursor:pointer",text:s.game==="glitch"?"Look at my case file again":s.game==="flaugin"?"Peek at my card again":s.game==="agenda"?"Peek at my agenda again":"Peek at my mission again"}),el("div",{style:"display:flex;justify-content:center;padding-top:10px"},cardView()));
-  const timer=()=>{if(!s.endsAt)return null;const t=el("div",{class:"timer"});const upd=()=>{const left=(s.endsAt-Date.now())/1000;t.textContent=left>0?fmt(left):"Time!";t.classList.toggle("hurry",left>0&&left<=10)};upd();pTimer=setInterval(upd,500);return el("div",{class:"panel"},el("h3",{text:"Time left"}),t)};
+  const timer=()=>playerClock(s)||el("span");
   const promptPanel=()=>{
     const m=s.meta||{};
     if(s.game==="copycat")return el("div",{class:"panel prompt-panel"},el("h3",{text:"Debate topic"}),el("p",{class:"prompt",text:m.prompt}));
@@ -1082,20 +1223,20 @@ function renderPlayerInner(){
   };
   if(s.phase==="cards"){
     const note=s.game==="agenda"?(P.peekedRound===s.round?"Now make your secret first pick below.":"Press and hold to read your agenda."):(P.peekedRound===s.round?"Got it. Watch the big screen.":"Press and hold to peek.");
-    v.append(el("div",{class:"pass"},el("p",{class:"sub",text:G.name+" · round "+s.round+" · keep your screen hidden"}),cardView(),el("p",{class:"status on-felt",id:"pReadyNote",text:note})));
+    v.append(el("div",{class:"pass"},el("p",{class:"sub",text:G.name+" · round "+s.round+" · keep your screen hidden"}),cardView(),el("p",{class:"status on-felt",id:"pReadyNote",text:note})),timer());
     if(s.game==="agenda"){v.append(el("div",{id:"agendaPick"}));renderAgendaPick()}
     return;
   }
   if(s.phase==="clues"){
     const pos=s.order.indexOf(P.pid)+1;
     v.append(el("p",{class:"big-msg",text:pos===1?"You go first!":"You're #"+pos+" to give a clue."}));
-    const ol=el("ol",{class:"order"});s.order.forEach(p=>ol.append(el("li",{class:p===P.pid?"me":null,text:rosterName(s,p)})));
-    v.append(el("div",{class:"panel"},el("h3",{text:"Speaking order"}),ol),timer(),peekAgain());
+    const ol=el("ol",{class:"order"});s.order.forEach(p=>ol.append(el("li",{class:(p===P.pid?"me":"")+(s.clock&&s.clock.k==="turn"&&s.clock.who===p?" now":"")||null,text:rosterName(s,p)})));
+    v.append(timer(),el("div",{class:"panel"},el("h3",{text:"Speaking order"}),ol),peekAgain());
     return;
   }
   if(s.phase==="talk"){
     const head=s.game==="copycat"?"Debate time! Sneak in your mission.":s.game==="glitch"?"Investigate! Ask questions.":"Debate and make deals!";
-    v.append(el("p",{class:"big-msg",text:head}),promptPanel(),timer(),peekAgain());
+    v.append(el("p",{class:"big-msg",text:head}),timer(),promptPanel(),peekAgain());
     if(s.game==="agenda"&&P.first!=null)v.append(el("p",{class:"status on-felt",text:"Your secret first pick: "+s.meta.options[P.first]+"."}));
     return;
   }
@@ -1178,11 +1319,13 @@ function renderPlayerRules(v,s,draft,hadFocus,openDetails){
     P.lastTry=now;P.tryErr="";err.textContent="";inp.value="";
     ch.send({type:"broadcast",event:"try",payload:{pid:P.pid,round:s.round,entry}}).catch(()=>{});
   };
+  const pc=playerClock(s);if(pc)v.append(pc);
   v.append(el("div",{class:"panel"},el("h3",{text:"Try "+(m.kind==="number"?"a number":"a word")}),form,err));
   if(hadFocus)setTimeout(()=>inp.focus(),0);
   v.append(el("div",{class:"panel"},el("h3",{text:"What the gate said"}),(s.log||[]).length?logList(s.log):el("p",{class:"sub",text:"Nothing tested yet."})));
   if(solved){v.append(el("p",{class:"solved",text:"✓ You got it"+((s.solved||[])[0]===P.pid?" first! +5":"! +2")+". Keep testing to watch the others."}));return}
-  if(used>=2){v.append(el("p",{class:"status on-felt err",text:"Out of guesses this round. Keep testing for fun!"}));return}
+  const maxG=s.maxGuesses||2;
+  if(used>=maxG){v.append(el("p",{class:"status on-felt err",text:"Out of guesses this round. Keep testing for fun!"}));return}
   const box=el("div",{class:"rule-opts"});
   m.options.forEach((t,i)=>{
     const wrong=P.myGuesses.includes(i);
@@ -1191,7 +1334,7 @@ function renderPlayerRules(v,s,draft,hadFocus,openDetails){
       ch.send({type:"broadcast",event:"guess",payload:{pid:P.pid,round:s.round,choice:i}}).catch(()=>{});renderPlayer();
     }}));
   });
-  v.append(el("details",{class:"panel",open:(openDetails||P.myGuesses.length)?"":null},el("summary",{style:"font-weight:800;cursor:pointer",text:"I know the rule! ("+(2-used)+" "+(2-used===1?"guess":"guesses")+" left)"}),box));
+  v.append(el("details",{class:"panel",open:(openDetails||P.myGuesses.length)?"":null},el("summary",{style:"font-weight:800;cursor:pointer",text:"I know the rule! ("+(maxG-used)+" "+(maxG-used===1?"guess":"guesses")+" left)"}),box));
 }
 function myScore(s){
   const rows=(s.scores||[]).slice().sort((a,b)=>b[1]-a[1]);const mine=(s.scores||[]).find(r=>r[0]===P.pid);
@@ -1243,8 +1386,8 @@ function myScore(s){
   const canFs=!!(root.requestFullscreen||root.webkitRequestFullscreen);
   const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches)||navigator.standalone;
   const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-  if(standalone)return;                       // already running full screen from the home screen
-  btn.hidden=false;                           // always offer it; browsers without the API get instructions instead
+  if(standalone&&!canFs)return;               // iPhone home-screen app: already full screen, no API to toggle
+  btn.hidden=false;                           // always offer it, including installed-app windows on a computer
   const isMac=/Mac/.test(navigator.platform||navigator.userAgent);
   const current=()=>document.fullscreenElement||document.webkitFullscreenElement;
   function sync(){const on=!!current();document.body.classList.toggle("is-fs",on);btn.setAttribute("aria-label",on?"Exit full screen":"Full screen");btn.title=on?"Exit full screen (F)":"Full screen (F)";btn.querySelector(".fs-label").textContent=on?"Exit full screen":"Full screen"}
@@ -1264,44 +1407,74 @@ function myScore(s){
   sync();
 })();
 
-/* ---------- theme music ("Game Show Grind") ----------
-   Plays on the TV and in one-phone games, never on players' phones.
-   Full volume on menus, lobby and reveals; drops low while everyone is talking or voting. */
+/* ---------- music director ----------
+   Beds (loop, crossfaded by screen): Game Show Grind on home/setup, Lofi Gameshow in the lobby and under talking,
+   Spin the Wreck while cards are dealt, Gravity Glitch for voting and the puzzle games, Spin the Wreck 2 on results.
+   Stingers (beat-cut sound bites with fades) mark deals, "go", votes and wins. Never plays on players' phones. */
 var Music=(function(){
-  const btn=$("musicBtn");if(!btn)return {sync(){}};
-  const audio=new Audio("theme.mp3?v=1");audio.loop=true;audio.preload="auto";audio.volume=0;
+  const btn=$("musicBtn");if(!btn)return {sync(){},sting(){return false}};
+  const TRACKS={theme:"theme.mp3?v=1",lobby:"music/bed-lobby.mp3",deal:"music/bed-deal.mp3",tense:"music/bed-tense.mp3",party:"music/bed-party.mp3"};
+  const STINGS={deal:["music/sting-deal.mp3",3800],win:["music/sting-win.mp3",7700],win2:["music/sting-win2.mp3",5800],go:["music/sting-go.mp3",1900],vote:["music/sting-vote.mp3",2600],join:["music/sting-join.mp3",1350]};
+  const decks={},fades={};
+  function deck(n){if(!decks[n]){const a=new Audio(TRACKS[n]);a.loop=true;a.preload="auto";a.volume=0;decks[n]=a}return decks[n]}
   const touchy=window.matchMedia&&matchMedia("(hover: none)").matches;
   let on=store.get("music",!touchy);       // default on for laptops/TVs, off for phones
-  let target=0,fade=0,unlocked=false;
-  const QUIET=["clues","talk","vote","final","play","guess"];
-  function wanted(){
-    if(!on||mode==="player")return 0;
-    const duck=window.__gnAnnTalking?0.35:1;
-    if(mode==="host"&&H&&QUIET.includes(H.phase))return 0.1*duck;
-    if(mode==="local"&&!$("vClues").hidden)return 0.1*duck;
-    return 0.45*duck;
+  let unlocked=false,current=null,stingUntil=0;
+  const vis=id=>!$(id).hidden;
+  function scene(){
+    if(!on||mode==="player")return [null,0];
+    if(mode==="host"&&H&&!vis("vSetup")&&!vis("vHome")){
+      const g=H.game,ph=H.phase;
+      if(ph==="lobby")return ["lobby",0.4];
+      if(ph==="cards")return ["deal",0.3];
+      if(ph==="clues"||ph==="talk")return [g==="glitch"?"tense":"lobby",0.1];
+      if(ph==="play")return ["tense",0.22];
+      if(ph==="vote"||ph==="final")return ["tense",0.13];
+      if(ph==="guess")return [null,0];
+      if(ph==="result")return ["party",0.33];
+    }
+    if(mode==="local"&&game){
+      if(vis("vPass"))return ["deal",0.22];
+      if(vis("vClues"))return [game.type==="glitch"?"tense":"lobby",0.1];
+      if(vis("vVote"))return ["tense",0.13];
+      if(vis("vGuess"))return [null,0];
+      if(vis("vResult"))return ["party",0.33];
+    }
+    return ["theme",0.45];
   }
-  function ramp(){
-    clearInterval(fade);
-    fade=setInterval(()=>{
-      const d=target-audio.volume;
-      if(Math.abs(d)<0.02){audio.volume=target;clearInterval(fade);if(target===0)audio.pause();return}
-      audio.volume=Math.max(0,Math.min(1,audio.volume+Math.sign(d)*0.03));
-    },60);
+  function ramp(name,target){
+    const a=deck(name);clearInterval(fades[name]);
+    if(target>0&&a.paused&&unlocked)a.play().catch(()=>{});
+    fades[name]=setInterval(()=>{
+      const d=target-a.volume;
+      if(Math.abs(d)<0.02){a.volume=target;clearInterval(fades[name]);if(target===0)a.pause();return}
+      a.volume=Math.max(0,Math.min(1,a.volume+Math.sign(d)*0.025));
+    },50);
   }
   function sync(){
     btn.hidden=mode==="player";
     btn.setAttribute("aria-pressed",String(on));btn.title=on?"Turn music off (M)":"Turn music on (M)";
-    target=unlocked?wanted():0;
-    if(target>0&&audio.paused)audio.play().catch(()=>{});
-    ramp();
+    let [track,vol]=unlocked?scene():[null,0];
+    const duck=(window.__gnAnnTalking?0.35:1)*(Date.now()<stingUntil?0.18:1);
+    if(track!==current){
+      if(track&&(track==="party"||track==="deal")&&decks[track])decks[track].currentTime=0;  // these start from the top each time
+      current=track;
+    }
+    Object.keys(TRACKS).forEach(n=>{if(n===track||decks[n])ramp(n,n===track?vol*duck:0)});
+  }
+  /* One-shot sound bite. Follows the Sounds toggle (not Music), so it still plays with music off. */
+  function sting(name){
+    const st=STINGS[name];if(!st||mode==="player"||!FX.isOn()||!unlocked)return false;
+    const a=new Audio(st[0]);a.volume=0.85;a.play().catch(()=>{});
+    stingUntil=Date.now()+st[1]-600;sync();setTimeout(sync,st[1]-500);
+    return true;
   }
   function unlock(){if(unlocked)return;unlocked=true;sync()}
   ["pointerdown","keydown"].forEach(t=>document.addEventListener(t,unlock,{capture:true}));
   btn.addEventListener("click",()=>{on=!on;store.set("music",on);unlocked=true;sync()});
   document.addEventListener("keydown",e=>{if((e.key==="m"||e.key==="M")&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const t=e.target;if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"))return;on=!on;store.set("music",on);unlocked=true;sync()}});
-  document.addEventListener("visibilitychange",()=>{if(document.hidden){audio.pause()}else sync()});
-  return {sync};
+  document.addEventListener("visibilitychange",()=>{if(document.hidden){Object.values(decks).forEach(a=>a.pause())}else sync()});
+  return {sync,sting};
 })();
 /* ---------- sound effects toggle, taps and unlock ---------- */
 (function(){

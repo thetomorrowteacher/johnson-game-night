@@ -40,4 +40,4 @@ Game Show Grind plays on the home screen. Cuts from Lofi Gameshow, Spin the Wrec
 ## Intro, transitions and ratings
 - First visit each session plays the Adventures with the Johnsons logo scene (tap or any key skips), then the home screen.
 - Red, gold and green bars sweep between screens, with title cards for each step: round, clues/debate, vote, reveal, and the next game.
-- 5-star rating on the home screen and on players' phones after a round. One rating per device (rating again changes it); stored in `gamenight_ratings`.
+- 5-star rating for each game, on its tile on the home screen, on players' phones after a round, and after one-phone rounds. One rating per device per game; stored in `gamenight_game_ratings`. The best-rated game gets a "Top rated" ribbon and a line under the title.

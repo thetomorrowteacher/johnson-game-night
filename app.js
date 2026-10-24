@@ -385,27 +385,36 @@ const RATE={sum:null,loading:false,err:""};
 function deviceId(){let d=store.get("device",null);if(!d||!/^[A-Za-z0-9]{12,48}$/.test(d)){d="";const a=new Uint8Array(16);crypto.getRandomValues(a);a.forEach(x=>d+="abcdefghijklmnopqrstuvwxyz0123456789"[x%36]);store.set("device",d)}return d}
 function loadRatings(){if(RATE.loading||!SB_URL)return;RATE.loading=true;api({action:"ratings",device:deviceId()}).then(j=>{RATE.sum=j;RATE.err=""}).catch(()=>{RATE.err="Ratings are offline right now."}).finally(()=>{RATE.loading=false;paintRatings()})}
 const STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
-function ratingWidget(compact){const w=el("div",{class:"rate"+(compact?" compact":""),"data-rate":""});paintOne(w);if(!RATE.sum)loadRatings();return w}
-function paintRatings(){document.querySelectorAll("[data-rate]").forEach(paintOne)}
+function gameRating(g){return RATE.sum&&RATE.sum.games&&RATE.sum.games[g]||null}
+function ratingWidget(game,compact){const w=el("div",{class:"rate"+(compact?" compact":""),"data-rate":game});paintOne(w);if(!RATE.sum)loadRatings();return w}
+function paintRatings(){document.querySelectorAll("[data-rate]").forEach(paintOne);paintTop()}
 function paintOne(w){
-  const S=RATE.sum,mine=S&&S.mine;w.textContent="";
-  const compact=w.classList.contains("compact");
-  const head=el("p",{class:"rate-head",text:mine?"Thanks for rating!":compact?"Enjoying Game Night? Rate it":"Rate Family Game Night"});
-  const stars=el("div",{class:"stars",role:"group","aria-label":"Your rating"});
-  for(let n=5;n>=1;n--){const b=el("button",{type:"button","aria-label":n+(n===1?" star":" stars"),"aria-pressed":String(!!mine&&n<=mine),class:mine&&n<=mine?"on":null,onclick:()=>rate(n)});b.innerHTML=STAR;stars.append(b)}
+  const g=w.dataset.rate,S=gameRating(g),mine=S&&S.mine;w.textContent="";
+  const compact=w.classList.contains("compact"),name=(GAMES[g]||{}).name||"this game";
+  const head=el("p",{class:"rate-head",text:mine?"Thanks for rating "+name+"!":compact?"How was "+name+"? Rate it":"Rate "+name});
+  const stars=el("div",{class:"stars",role:"group","aria-label":"Your rating for "+name});
+  for(let n=5;n>=1;n--){const b=el("button",{type:"button","aria-label":n+(n===1?" star":" stars"),"aria-pressed":String(!!mine&&n<=mine),class:mine&&n<=mine?"on":null,onclick:()=>rate(g,n)});b.innerHTML=STAR;stars.append(b)}
   const avg=S&&S.count?S.avg:0;
   const meter=el("span",{class:"avg-stars","aria-hidden":"true"});meter.innerHTML=STAR.repeat(5);const fill=el("i",{style:"width:"+(avg/5*100)+"%"});fill.innerHTML=STAR.repeat(5);meter.append(fill);
-  const summary=el("p",{class:"rate-sum"},S&&S.count?meter:null,document.createTextNode(RATE.err?RATE.err:!S?"Loading ratings…":S.count?" "+S.avg.toFixed(1)+" from "+S.count+(S.count===1?" rating":" ratings")+(mine?" · you gave "+mine:""):"Be the first to rate it!"));
+  const summary=el("p",{class:"rate-sum"},S&&S.count?meter:null,document.createTextNode(RATE.err?RATE.err:!RATE.sum?"Loading ratings…":S&&S.count?" "+S.avg.toFixed(1)+" from "+S.count+(S.count===1?" rating":" ratings")+(mine?" · you gave "+mine:""):"No ratings yet. Be the first!"));
   w.append(head,stars,summary);
 }
-async function rate(n){
-  const prev=RATE.sum;RATE.sum=Object.assign({count:0,avg:0},prev||{},{mine:n});paintRatings();
+/* "Top rated" ribbon on the best game's tile, plus a line under the title. */
+function paintTop(){
+  const top=RATE.sum&&RATE.sum.top;
+  document.querySelectorAll(".game-tile").forEach(t=>{t.classList.toggle("top-rated",!!top&&t.dataset.game===top);const old=t.querySelector(".top-badge");if(old)old.remove();
+    if(top&&t.dataset.game===top){const S=gameRating(top);t.querySelector(".game-art").append(el("div",{class:"top-badge"},el("b",{text:"★ Top rated"}),el("small",{text:S.avg.toFixed(1)+" stars · "+S.count+(S.count===1?" rating":" ratings")})))}});
+  const line=$("topLine");if(line){line.textContent="";line.hidden=!top;if(top){const S=gameRating(top);line.append(document.createTextNode("★ Top rated game: "),el("b",{text:GAMES[top].name}),document.createTextNode(" · "+S.avg.toFixed(1)+" stars"))}}
+}
+async function rate(g,n){
+  const prev=RATE.sum;const next=JSON.parse(JSON.stringify(prev||{games:{},top:null}));next.games[g]=Object.assign({count:0,avg:0},next.games[g]||{},{mine:n});RATE.sum=next;paintRatings();
   FX.play(n>=4?"solve":"pop");FX.vibrate(20);if(n===5)FX.confetti(70);
-  try{RATE.sum=await api({action:"rate",device:deviceId(),stars:n});RATE.err=""}catch(e){RATE.err="Couldn't save that. Try again.";RATE.sum=prev}
+  try{RATE.sum=await api({action:"rate",device:deviceId(),game:g,stars:n});RATE.err=""}catch(e){RATE.err="Couldn't save that. Try again.";RATE.sum=prev}
   paintRatings();
 }
 function renderHome(){
-  const hr=$("homeRate");if(hr&&!hr.firstChild)hr.append(ratingWidget(false));
+  document.querySelectorAll(".game-tile").forEach(t=>{const g=t.dataset.game;const body=t.querySelector(".game-body");if(g&&body&&!body.querySelector("[data-rate]"))body.append(ratingWidget(g,false))});
+  if(RATE.sum)paintTop();
   document.querySelectorAll(".resume").forEach(n=>n.remove());
   const h=store.get("host",null);
   const last=store.get("lastRoom",null);const me=last?store.get("me:"+last,null):null;
@@ -619,7 +628,9 @@ function finishLocalOdd(v){
   renderScoreTable($("scoreBody"),players.map(n=>[n,scores[n]||0]),true);show("vResult");drumThen(caught,$("resTitle"));
 }
 /* drumroll, then the verdict lands with a fanfare (and confetti) or a sad trombone */
+function localRate(){const box=$("localRate");if(!box||!game)return;box.textContent="";box.append(ratingWidget(game.type,true))}
 function drumThen(win,verdictEl,skipDrum){
+  localRate();
   Trans.play("Drumroll…","The reveal",{long:true,quiet:true});
   if(verdictEl){verdictEl.classList.remove("big-in");void verdictEl.offsetWidth;verdictEl.classList.add("big-in")}
   FX.play("drum",0.85);ANN.clear();
@@ -1237,7 +1248,7 @@ let lastPlayerKey="";
 function renderPlayer(){
   if(!P||mode!=="player")return;
   renderPlayerInner();
-  if(P.closed||(P.state&&P.state.phase==="result"))$("vPlayer").append(ratingWidget(true));
+  if(P.state&&P.state.phase==="result"&&GAMES[P.state.game])$("vPlayer").append(ratingWidget(P.state.game,true));
   const s=P.state;const key=s?[s.phase,s.round,s.game,s.epoch].join("|"):(P.closed?"closed":"wait");
   if(key!==lastPlayerKey){lastPlayerKey=key;animIn($("vPlayer"))}
 }

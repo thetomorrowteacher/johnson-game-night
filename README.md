@@ -36,3 +36,8 @@ Each game has its own house rules, saved on the device that hosts:
 
 ## Music
 Game Show Grind plays on the home screen. Cuts from Lofi Gameshow, Spin the Wreck, Spin the Wreck 2 and Gravity Glitch (in `music/`) play under the lobby, the deal, the talking, voting and results, with short stingers for the deal, "go", votes and wins. Music only plays on the TV, never on phones.
+
+## Intro, transitions and ratings
+- First visit each session plays the Adventures with the Johnsons logo scene (tap or any key skips), then the home screen.
+- Red, gold and green bars sweep between screens, with title cards for each step: round, clues/debate, vote, reveal, and the next game.
+- 5-star rating on the home screen and on players' phones after a round. One rating per device (rating again changes it); stored in `gamenight_ratings`.

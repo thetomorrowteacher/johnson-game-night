@@ -12,6 +12,34 @@ const SITE=location.origin+location.pathname.replace(/index\.html$/,"");
 const C=window.GN_CONTENT||{};
 const FX=window.GN_FX||{play(){},vibrate(){},confetti(){},countUp(e,a,b){e.textContent=String(b)},unlock(){},isOn(){return false},setOn(){},setQuiet(){}};
 const ANN=window.GN_ANN||{say(){},line(){},round(){},readySetGo(){},count(){},preload(){},voice(){return "off"},setVoice(){},setDuck(){},clear(){}};
+/* Transition scenes: red, gold and green bars sweep across with a title card between screens. */
+const Trans=(function(){
+  let busyUntil=0,t1=0;
+  function play(big,small,o){
+    o=o||{};const box=$("trans");if(!box)return;
+    if(FX.reduce&&!big)return;
+    box.querySelector(".trans-card b").textContent=big||"";
+    box.querySelector(".trans-card small").textContent=small||"";
+    box.classList.toggle("bare",!big);box.classList.remove("go");void box.offsetWidth;box.classList.add("go");
+    const len=big?(o.long?1900:1500):750;busyUntil=Date.now()+len;
+    clearTimeout(t1);t1=setTimeout(()=>box.classList.remove("go"),len+60);
+    if(big&&!o.quiet)FX.play("swoosh");
+  }
+  return {play,busy:()=>Date.now()<busyUntil};
+})();
+function sceneFor(game,phase,round){
+  const G=GAMES[game]||{name:"Game Night"};
+  if(phase==="cards")return ["Round "+round,G.name];
+  if(phase==="play")return ["Open the gate!","Rulebreakers · Round "+round];
+  if(phase==="clues")return ["Clue time!","One word each"];
+  if(phase==="talk")return game==="copycat"?["Debate!","Sneak in your mission"]:game==="glitch"?["Investigate!","Ask questions"]:["Make your case!","Debate and make deals"];
+  if(phase==="vote")return ["Vote!",G.name];
+  if(phase==="final")return ["Final vote!",G.name];
+  if(phase==="result")return ["Drumroll…","The reveal"];
+  if(phase==="lobby")return [G.name,"Up next"];
+  return null;
+}
+let booted=false;
 function animIn(node){if(!node||FX.reduce)return;node.classList.remove("view-in");void node.offsetWidth;node.classList.add("view-in");clearTimeout(node._animT);node._animT=setTimeout(()=>node.classList.remove("view-in"),1200)}
 /* TV-side sounds: the TV and one-phone games get effects and the announcer; players' phones get quieter effects and vibration. */
 function tvSound(){return mode==="host"||mode==="local"||mode==="home"}
@@ -55,7 +83,7 @@ const store={
 };
 const $=id=>document.getElementById(id);
 const VIEWS=["vHome","vSetup","vPass","vClues","vVote","vGuess","vResult","vHost","vJoin","vPlayer"];
-function show(id){const was=VIEWS.find(v=>!$(v).hidden);VIEWS.forEach(v=>{$(v).hidden=v!==id});document.body.classList.toggle("at-home",id==="vHome");window.scrollTo(0,0);if(was!==id&&id!=="vHost"&&id!=="vPlayer")animIn($(id));if(typeof Music!=="undefined")Music.sync()}
+function show(id){const was=VIEWS.find(v=>!$(v).hidden);if(booted&&was&&was!==id&&!Trans.busy()&&["vHome","vSetup","vJoin","vHost","vPlayer"].includes(id))Trans.play();VIEWS.forEach(v=>{$(v).hidden=v!==id});document.body.classList.toggle("at-home",id==="vHome");window.scrollTo(0,0);if(was!==id&&id!=="vHost"&&id!=="vPlayer")animIn($(id));if(typeof Music!=="undefined")Music.sync()}
 function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const k in attrs){const v=attrs[k];if(v==null)continue;if(k==="class")e.className=v;else if(k==="text")e.textContent=v;else if(k.startsWith("on"))e[k]=v;else e.setAttribute(k,v)}kids.forEach(c=>c!=null&&e.append(c));return e}
 function rnd(n){try{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n}catch(e){return Math.floor(Math.random()*n)}}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -352,7 +380,32 @@ function confirmLeave(){const now=Date.now();if(now-leaveArmed<3000)return true;
 document.querySelectorAll("[data-host]").forEach(b=>b.onclick=()=>{setGame(b.dataset.host);mode="host";setTag(GAMES[curGame].name);if(H){H.game=curGame;H.phase="lobby";H.epoch=Date.now();broadcast()}openSetup()});
 document.querySelectorAll("[data-local]").forEach(b=>b.onclick=()=>{setGame(b.dataset.local);mode="local";setTag(GAMES[curGame].name);openSetup()});
 $("goJoin").onclick=()=>openJoin("");
+/* ---------- star ratings (one per device; rating again changes it) ---------- */
+const RATE={sum:null,loading:false,err:""};
+function deviceId(){let d=store.get("device",null);if(!d||!/^[A-Za-z0-9]{12,48}$/.test(d)){d="";const a=new Uint8Array(16);crypto.getRandomValues(a);a.forEach(x=>d+="abcdefghijklmnopqrstuvwxyz0123456789"[x%36]);store.set("device",d)}return d}
+function loadRatings(){if(RATE.loading||!SB_URL)return;RATE.loading=true;api({action:"ratings",device:deviceId()}).then(j=>{RATE.sum=j;RATE.err=""}).catch(()=>{RATE.err="Ratings are offline right now."}).finally(()=>{RATE.loading=false;paintRatings()})}
+const STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+function ratingWidget(compact){const w=el("div",{class:"rate"+(compact?" compact":""),"data-rate":""});paintOne(w);if(!RATE.sum)loadRatings();return w}
+function paintRatings(){document.querySelectorAll("[data-rate]").forEach(paintOne)}
+function paintOne(w){
+  const S=RATE.sum,mine=S&&S.mine;w.textContent="";
+  const compact=w.classList.contains("compact");
+  const head=el("p",{class:"rate-head",text:mine?"Thanks for rating!":compact?"Enjoying Game Night? Rate it":"Rate Family Game Night"});
+  const stars=el("div",{class:"stars",role:"group","aria-label":"Your rating"});
+  for(let n=5;n>=1;n--){const b=el("button",{type:"button","aria-label":n+(n===1?" star":" stars"),"aria-pressed":String(!!mine&&n<=mine),class:mine&&n<=mine?"on":null,onclick:()=>rate(n)});b.innerHTML=STAR;stars.append(b)}
+  const avg=S&&S.count?S.avg:0;
+  const meter=el("span",{class:"avg-stars","aria-hidden":"true"});meter.innerHTML=STAR.repeat(5);const fill=el("i",{style:"width:"+(avg/5*100)+"%"});fill.innerHTML=STAR.repeat(5);meter.append(fill);
+  const summary=el("p",{class:"rate-sum"},S&&S.count?meter:null,document.createTextNode(RATE.err?RATE.err:!S?"Loading ratings…":S.count?" "+S.avg.toFixed(1)+" from "+S.count+(S.count===1?" rating":" ratings")+(mine?" · you gave "+mine:""):"Be the first to rate it!"));
+  w.append(head,stars,summary);
+}
+async function rate(n){
+  const prev=RATE.sum;RATE.sum=Object.assign({count:0,avg:0},prev||{},{mine:n});paintRatings();
+  FX.play(n>=4?"solve":"pop");FX.vibrate(20);if(n===5)FX.confetti(70);
+  try{RATE.sum=await api({action:"rate",device:deviceId(),stars:n});RATE.err=""}catch(e){RATE.err="Couldn't save that. Try again.";RATE.sum=prev}
+  paintRatings();
+}
 function renderHome(){
+  const hr=$("homeRate");if(hr&&!hr.firstChild)hr.append(ratingWidget(false));
   document.querySelectorAll(".resume").forEach(n=>n.remove());
   const h=store.get("host",null);
   const last=store.get("lastRoom",null);const me=last?store.get("me:"+last,null):null;
@@ -472,7 +525,7 @@ function startLocalRound(){
     const b=curGame==="copycat"?buildCopycat(ids,oddIdx):buildGlitch(ids,oddIdx);
     game={type:curGame,built:b,fibIdx:oddIdx,turn:0,deal:shuffle(players.map((_,i)=>i)),voted:null};
   }
-  setTag(GAMES[curGame].name+" · Round "+roundNo);if(!Music.sting("deal"))FX.play("deal");ANN.round(roundNo);showPass();
+  setTag(GAMES[curGame].name+" · Round "+roundNo);if(!Music.sting("deal"))FX.play("deal");ANN.round(roundNo);showPass();Trans.play("Round "+roundNo,GAMES[curGame].name,{quiet:true});
 }
 function localCard(i){
   if(game.type==="flaugin"){const isFib=game.fibIdx.includes(i);return {isFib,word:game.word,pack:(!isFib||$("optHint").checked)?PACKS[game.pid].name:null,twoFibs:game.fibIdx.length>1}}
@@ -517,7 +570,7 @@ function showClues(){
   if(game.type==="flaugin"){$("talkTitle").textContent="Clue round";$("talkSub").textContent="One word each, in this order. Not too obvious, not too vague.";tp.hidden=true}
   else if(game.type==="copycat"){$("talkTitle").textContent="Debate time";$("talkSub").textContent="Everyone weighs in, in this order, then talk freely. Sneak in your mission!";tp.hidden=false;tp.append(el("h3",{text:"The topic"}),el("p",{class:"prompt",text:game.built.meta.prompt}))}
   else{$("talkTitle").textContent="Investigate";$("talkSub").textContent="Take turns asking each other questions about the case. Don’t read your file out loud!";tp.hidden=false;tp.append(el("h3",{text:"The case"}),el("p",{class:"prompt",text:game.built.meta.title}),el("p",{class:"scene",text:game.built.meta.scene}))}
-  show("vClues");localClockStart(order);FX.play("whoosh");ANN.say("ready");
+  show("vClues");{const sc=sceneFor(game.type,game.type==="flaugin"?"clues":"talk");Trans.play(sc[0],sc[1],{quiet:true})}localClockStart(order);FX.play("whoosh");ANN.say("ready");
 }
 $("toVote").onclick=()=>{resetTimer();showVote();Music.sync();if(!Music.sting("vote"))FX.play("pop")};
 function showVote(){
@@ -527,7 +580,7 @@ function showVote(){
   $("voteTitle").textContent=game.type==="flaugin"?"Who’s flaugin’?":game.type==="copycat"?"Who’s the Copycat?":"Whose file is glitched?";
   const two=game.fibIdx.length>1;
   $("voteSub").textContent=two?"There are two this round. Vote one out; catching either counts.":"Count hands, then tap the player with the most votes.";
-  $("lockVote").disabled=true;$("lockVote").textContent="Reveal";show("vVote");
+  $("lockVote").disabled=true;$("lockVote").textContent="Reveal";show("vVote");Trans.play("Vote!",GAMES[game.type].name,{quiet:true});
 }
 $("lockVote").onclick=()=>{
   const v=game.voted;
@@ -567,6 +620,7 @@ function finishLocalOdd(v){
 }
 /* drumroll, then the verdict lands with a fanfare (and confetti) or a sad trombone */
 function drumThen(win,verdictEl,skipDrum){
+  Trans.play("Drumroll…","The reveal",{long:true,quiet:true});
   if(verdictEl){verdictEl.classList.remove("big-in");void verdictEl.offsetWidth;verdictEl.classList.add("big-in")}
   FX.play("drum",0.85);ANN.clear();
   setTimeout(()=>{if(!(win&&Music.sting(Math.random()<0.5?"win":"win2")))FX.play(win?"win":"lose");ANN.line(win?"win":"lose");if(win)FX.confetti()},900);
@@ -728,6 +782,7 @@ function hostWon(){
   return true;
 }
 function phaseFx(p,prev){
+  if(p!==prev||p==="cards"||p==="play"){const sc=sceneFor(H.game,p,H.round);if(sc&&!(p==="lobby"&&!prev))Trans.play(sc[0],sc[1],{long:p==="result",quiet:p==="result"})}
   if(p==="cards"){if(!Music.sting("deal"))FX.play("deal");ANN.round(H.round)}
   else if(p==="play"){if(!Music.sting("deal"))FX.play("deal");ANN.round(H.round)}
   else if(p==="clues"||p==="talk"){FX.play("whoosh");ANN.say("ready")}
@@ -857,7 +912,7 @@ function chipsFor(list,isOk){const c=el("div",{class:"chips"});list.forEach(r=>{
 function errLine(){return H.err?el("p",{class:"status on-felt err",text:H.err}):el("span")}
 function gameSwitcher(){
   const row=el("div",{class:"switcher",role:"group","aria-label":"Choose a game"});
-  Object.keys(GAMES).forEach(g=>row.append(el("button",{type:"button","aria-pressed":String(H.game===g),text:GAMES[g].name,onclick:()=>{setGame(g);H.game=g;H.phase="lobby";H.epoch=Date.now();setTag(GAMES[g].name+" · Room "+H.code);broadcast();renderHost()}})));
+  Object.keys(GAMES).forEach(g=>row.append(el("button",{type:"button","aria-pressed":String(H.game===g),text:GAMES[g].name,onclick:()=>{if(H.game!==g)Trans.play(GAMES[g].name,"Up next");setGame(g);H.game=g;H.phase="lobby";H.epoch=Date.now();setTag(GAMES[g].name+" · Room "+H.code);broadcast();renderHost()}})));
   return row;
 }
 function scoreboard(){
@@ -1138,6 +1193,10 @@ function phoneScored(s){
   return !!((s.reveal||{}).rp||{})[P.pid];
 }
 function phoneFx(prev,s,inRound){
+  if(prev&&(prev.phase!==s.phase||prev.round!==s.round||prev.game!==s.game)){
+    const sc=(s.phase!=="lobby"&&!inRound)?null:sceneFor(s.game,s.phase,s.round);
+    if(sc)Trans.play(sc[0],sc[1],{long:s.phase==="result",quiet:true});
+  }
   if(!inRound)return;
   if(s.phase==="result"&&(!prev||prev.phase!=="result"||prev.epoch!==s.epoch)){
     const won=phoneScored(s);
@@ -1178,6 +1237,7 @@ let lastPlayerKey="";
 function renderPlayer(){
   if(!P||mode!=="player")return;
   renderPlayerInner();
+  if(P.closed||(P.state&&P.state.phase==="result"))$("vPlayer").append(ratingWidget(true));
   const s=P.state;const key=s?[s.phase,s.round,s.game,s.epoch].join("|"):(P.closed?"closed":"wait");
   if(key!==lastPlayerKey){lastPlayerKey=key;animIn($("vPlayer"))}
 }
@@ -1488,6 +1548,18 @@ var Music=(function(){
   ANN.setDuck(t=>{window.__gnAnnTalking=t;if(typeof Music!=="undefined")Music.sync()});
   sync();
 })();
+/* ---------- intro: Adventures with the Johnsons logo scene, then the home screen ---------- */
+(function intro(){
+  const box=$("intro");if(!box||!document.documentElement.classList.contains("intro-on"))return;
+  try{sessionStorage.setItem("gn:intro","1")}catch(e){}
+  let done=false;
+  const end=fast=>{if(done)return;done=true;box.classList.add("intro-out");setTimeout(()=>{document.documentElement.classList.remove("intro-on");box.remove()},fast?450:700)};
+  const len=FX.reduce?1800:4300;
+  const t=setTimeout(()=>end(false),len);
+  const skip=()=>{clearTimeout(t);FX.play("whoosh");end(true)};
+  box.addEventListener("click",skip);
+  document.addEventListener("keydown",function k(e){if(!done){skip()}document.removeEventListener("keydown",k)},{once:true});
+})();
 /* ---------- boot ---------- */
 const qs=new URLSearchParams(location.search);
 const pinIn=(qs.get("pin")||location.hash.replace("#","")||"").toUpperCase().replace(/[^A-Z]/g,"");
@@ -1502,4 +1574,5 @@ if(pinIn.length===4){
 }else if(!touchDevice&&savedHost&&sb&&Date.now()-savedHost.at<12*3600e3){mode="host";resumeRoom(savedHost)}
 else if(touchDevice&&lastMe&&sb&&Date.now()-(lastMe.at||0)<6*3600e3){mode="player";startPlayer(lastRoom,lastMe)}
 else show("vHome");
+booted=true;
 })();

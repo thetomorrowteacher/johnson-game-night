@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d5a26"/><stop offset="1" stop-color="#15130e"/></linearGradient>
+<filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000" flood-opacity=".5"/></filter>
+<radialGradient id="glow" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#f6c21c" stop-opacity=".55"/><stop offset="1" stop-color="#f6c21c" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#bg)"/>
+<ellipse cx="600" cy="400" rx="330" ry="300" fill="url(#glow)"/>
+<g filter="url(#sh)">
+<path d="M380 640 V300 a220 220 0 0 1 440 0 V640 z" fill="#15130e" stroke="#f6c21c" stroke-width="18"/>
+<g stroke="#f6c21c" stroke-width="10" opacity=".9"><line x1="460" y1="230" x2="460" y2="640"/><line x1="540" y1="160" x2="540" y2="640"/><line x1="660" y1="160" x2="660" y2="640"/><line x1="740" y1="230" x2="740" y2="640"/></g>
+<circle cx="600" cy="420" r="58" fill="#c8211a"/><rect x="584" y="440" width="32" height="70" rx="10" fill="#c8211a"/><circle cx="600" cy="420" r="20" fill="#15130e"/>
+</g>
+<g font-family="'Bowlby One','Arial Black',Impact,sans-serif" filter="url(#sh)">
+<g transform="translate(70 170) rotate(-8)"><rect width="260" height="74" rx="37" fill="#2f9a2b"/><text x="130" y="50" text-anchor="middle" font-size="34" fill="#fffaee">APPLE ✓</text></g>
+<g transform="translate(60 330) rotate(5)"><rect width="230" height="74" rx="37" fill="#c8211a"/><text x="115" y="50" text-anchor="middle" font-size="34" fill="#fffaee">CAT ✗</text></g>
+<g transform="translate(880 200) rotate(7)"><rect width="260" height="74" rx="37" fill="#2f9a2b"/><text x="130" y="50" text-anchor="middle" font-size="34" fill="#fffaee">TIGER ✓</text></g>
+<g transform="translate(900 380) rotate(-6)"><rect width="210" height="74" rx="37" fill="#c8211a"/><text x="105" y="50" text-anchor="middle" font-size="34" fill="#fffaee">DOG ✗</text></g>
+</g>
+<text x="600" y="110" text-anchor="middle" font-family="'Bowlby One','Arial Black',Impact,sans-serif" font-size="96" fill="#f6c21c" stroke="#15130e" stroke-width="6" paint-order="stroke">?</text>
+</svg>

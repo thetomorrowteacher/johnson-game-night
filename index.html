@@ -240,6 +240,67 @@ body.at-home header.top .logo{visibility:hidden}
 .is-fs .fs-btn .fs-off{display:block}
 @media (max-width:520px){.fs-btn .fs-label{display:none}.fs-btn{padding:8px}}
 .fs-tip{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(420px,calc(100% - 32px));background:var(--card);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:.9rem;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:20}
+
+/* Multi-game additions */
+.prompt-panel .prompt{margin:0;font-family:var(--display);font-size:clamp(1.3rem,4.6vw,2rem);line-height:1.15;color:var(--felt);text-wrap:balance}
+.prompt-panel .scene{margin:0;color:var(--muted)}
+.tv-prompt{background:var(--card);color:var(--ink);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px;box-shadow:0 4px 0 var(--felt),0 14px 30px rgba(0,0,0,.25)}
+.tv-prompt .eyebrow{color:var(--berry)}
+.tv-prompt .prompt{margin:0;font-family:var(--display);font-size:clamp(1.6rem,4vw,3rem);line-height:1.08;color:var(--felt);text-wrap:balance}
+.tv-prompt .scene{margin:0;color:var(--muted);font-size:1.05rem}
+.opt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opt{background:var(--soft);border-radius:14px;padding:14px;font-family:var(--display);font-size:clamp(1.05rem,2.6vw,1.6rem);color:var(--felt);text-align:center;overflow-wrap:anywhere}
+.opt.win{background:var(--sky);box-shadow:0 0 0 3px var(--felt)}
+.opt small{display:block;font-family:var(--body);font-size:.85rem;color:var(--muted);font-weight:700;margin-top:4px}
+.opt-btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.opt-btns button{background:#fff;box-shadow:inset 0 0 0 2px var(--line);border-radius:12px;padding:16px 10px;overflow-wrap:anywhere}
+.opt-btns button[aria-pressed=true]{box-shadow:inset 0 0 0 3px var(--lav);background:var(--lav-soft)}
+.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;text-align:left;width:100%}
+.facts li{display:grid;grid-template-columns:minmax(0,6.5em) minmax(0,1fr);gap:8px;font-size:.9rem;line-height:1.25}
+.facts b{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:2px}
+.secret.tall{aspect-ratio:auto;min-height:440px;width:min(340px,100%)}
+.secret .mission{font-family:var(--display);font-size:1.35rem;line-height:1.15;color:var(--felt);overflow-wrap:anywhere}
+.secret.fib .mission{color:var(--sky)}
+.case-title{font-family:var(--display);font-size:1.2rem;line-height:1.1;color:var(--felt)}
+.truth{width:100%;border-collapse:collapse;font-size:.95rem}
+.truth td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
+.truth td:first-child{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800;width:7.5em}
+.truth .bad{color:var(--berry);font-weight:700}
+.agenda-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.agenda-list li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;background:var(--soft);border-radius:10px;padding:10px 12px}
+.agenda-list .ok{color:var(--win);font-weight:800}
+.agenda-list .no{color:var(--berry);font-weight:800}
+.agenda-list .who{font-weight:800}
+.agenda-list .pts{font-family:var(--display);color:var(--felt)}
+.switcher{display:flex;flex-wrap:wrap;gap:6px}
+.switcher button{padding:6px 12px;font-size:.85rem;background:rgba(255,255,255,.1);color:var(--on-bg);box-shadow:inset 0 0 0 2px rgba(255,255,255,.3)}
+.switcher button[aria-pressed=true]{background:var(--sky);color:var(--felt);box-shadow:0 2px 0 var(--felt)}
+.gate{display:grid;place-items:center;gap:8px;min-height:150px;border-radius:16px;background:var(--felt);color:var(--on-bg);padding:18px;text-align:center}
+.gate .entry{font-family:var(--display);font-size:clamp(1.8rem,5vw,3.2rem);line-height:1;overflow-wrap:anywhere}
+.gate .verdict-tag{font-family:var(--display);font-size:1.1rem;letter-spacing:.08em;padding:4px 12px;border-radius:999px}
+.gate .yes{background:var(--lav);color:#fff}
+.gate .nope{background:var(--berry);color:#fff}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;max-height:380px;overflow:auto}
+.log li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 10px;border-radius:8px;background:var(--soft);font-weight:600;overflow-wrap:anywhere}
+.log li small{color:var(--muted);font-weight:400}
+.log .yes-t{color:var(--win);font-weight:800;font-size:.8rem;letter-spacing:.06em}
+.log .no-t{color:var(--berry);font-weight:800;font-size:.8rem;letter-spacing:.06em}
+.examples{display:flex;gap:8px;flex-wrap:wrap}
+.examples span{padding:6px 12px;border-radius:999px;font-weight:800}
+.examples .ex-yes{background:var(--lav-soft);color:var(--win)}
+.examples .ex-no{background:#fde4e1;color:var(--berry)}
+.rule-opts{display:flex;flex-direction:column;gap:8px}
+.rule-opts button{text-align:left;background:#fff;box-shadow:inset 0 0 0 2px var(--line);border-radius:12px;padding:12px 14px;font-weight:700}
+.rule-opts button.wrong{box-shadow:inset 0 0 0 2px var(--berry);color:var(--berry);text-decoration:line-through}
+.solved{background:var(--lav-soft);color:var(--win);border-radius:12px;padding:12px 14px;font-weight:800;margin:0}
+.try-form{display:flex;gap:8px;flex-wrap:wrap}
+.try-form input{font-size:1.2rem}
+
+@media (max-width:560px){
+  header.top .logo-text{display:none}
+  header.top .round-tag{text-align:right;min-width:0;overflow-wrap:anywhere;font-size:.68rem}
+  header.top>.row{flex-wrap:nowrap;min-width:0;justify-content:flex-end}
+}
 </style>
 </head>
 <body>
@@ -267,27 +328,61 @@ body.at-home header.top .logo{visibility:hidden}
         <div class="game-body">
           <h3 class="game-name">Flau<span>gin</span></h3>
           <p class="define"><i>Flaugin’</i> (adj.) Memphis slang for lying, fronting, faking it.</p>
-          <p class="game-desc">Everyone gets the secret word except whoever’s flaugin’. Give one-word clues, sniff out the faker, and vote them out. 3 to 30 players, ages 6 and up.</p>
-          <div class="row">
-            <button id="goHost">Host on the TV</button>
-            <button class="btn-ghost" id="goLocal">One-phone game</button>
-          </div>
+          <p class="game-desc">Everyone gets the secret word except whoever’s flaugin’. Give one-word clues, sniff out the faker, and vote them out. 3 to 30 players.</p>
+          <div class="row"><button data-host="flaugin">Host on the TV</button><button class="btn-ghost" data-local="flaugin">One-phone game</button></div>
         </div>
       </article>
-      <article class="game-tile soon">
+      <article class="game-tile">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-copycat.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">Somebody’s mission is different</span>
+        </div>
         <div class="game-body">
-          <h3 class="game-name">More games coming</h3>
-          <p class="game-desc">Same PIN, same phones. New games get added to this shelf.</p>
+          <h3 class="game-name">Copy<span>cat</span></h3>
+          <p class="game-desc">Everyone gets a secret mission for the debate on the TV, except the Copycat, whose mission is a little different. Act natural, then vote out the Copycat. 3 to 30 players.</p>
+          <div class="row"><button data-host="copycat">Host on the TV</button><button class="btn-ghost" data-local="copycat">One-phone game</button></div>
         </div>
       </article>
-    </div>
+      <article class="game-tile">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-glitch.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">Somebody remembers it wrong</span>
+        </div>
+        <div class="game-body">
+          <h3 class="game-name">The <span>Glitch</span></h3>
+          <p class="game-desc">Everyone reads the same case file, but one file has two details changed, and nobody knows whose. Ask questions, compare stories, find the glitch. 3 to 30 players.</p>
+          <div class="row"><button data-host="glitch">Host on the TV</button><button class="btn-ghost" data-local="glitch">One-phone game</button></div>
+        </div>
+      </article>
+      <article class="game-tile">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-agenda.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">Everyone wants something</span>
+        </div>
+        <div class="game-body">
+          <h3 class="game-name">Secret <span>Agenda</span></h3>
+          <p class="game-desc">The family has to make a decision. Everyone has a secret goal: get the beach picked, keep pizza off the table, make two people change their minds. Negotiate, then vote. 3 to 30 players.</p>
+          <div class="row"><button data-host="agenda">Host on the TV</button></div>
+        </div>
+      </article>
+      <article class="game-tile">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-rules.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">Crack the secret rule</span>
+        </div>
+        <div class="game-body">
+          <h3 class="game-name">Rule<span>breakers</span></h3>
+          <p class="game-desc">The gate only lets certain words or numbers through. Test your guesses on your phone, watch what gets ACCEPTED, and be first to crack the rule. 2 to 30 players.</p>
+          <div class="row"><button data-host="rules">Host on the TV</button></div>
+        </div>
+      </article>
     <p class="status on-felt" id="homeNote"></p>
   </section>
 
   <!-- SETUP (shared by host + one-phone) -->
   <section id="vSetup" hidden>
     <div>
-      <p class="eyebrow">Flaugin</p>
+      <p class="eyebrow" id="setupGame">Flaugin</p>
       <h2 id="setupTitle">Set the table</h2>
       <p class="sub" id="setupSub"></p>
     </div>
@@ -300,16 +395,24 @@ body.at-home header.top .logo{visibility:hidden}
       </form>
       <p class="status" id="playerStatus"></p>
     </div>
-    <div class="panel">
+    <div class="panel" id="packPanel">
       <h3>Word pack</h3>
       <div class="packs" id="packs"></div>
     </div>
     <div class="panel">
       <h3>House rules</h3>
-      <label class="toggle"><input type="checkbox" id="optHint" checked><span>The faker sees the pack name<small>Recommended for younger players.</small></span></label>
-      <label class="toggle"><input type="checkbox" id="optTimer" checked><span>Two-minute talk timer<small>Keeps the discussion moving before the vote.</small></span></label>
-      <div class="row" style="justify-content:space-between">
-        <span style="font-weight:600">Fakers</span>
+      <label class="toggle" id="hintRow"><input type="checkbox" id="optHint" checked><span>The faker sees the pack name<small>Recommended for younger players.</small></span></label>
+      <label class="toggle" id="timerRow"><input type="checkbox" id="optTimer" checked><span><span id="timerLabel">Two-minute talk timer</span><small>Keeps the discussion moving before the vote.</small></span></label>
+      <div class="row" id="kindRow" style="justify-content:space-between" hidden>
+        <span style="font-weight:600">The gate tests</span>
+        <div class="seg" role="group" aria-label="What players test">
+          <button type="button" data-kind="word" aria-pressed="true">Words</button>
+          <button type="button" data-kind="number" aria-pressed="false">Numbers</button>
+          <button type="button" data-kind="mix" aria-pressed="false">Mix</button>
+        </div>
+      </div>
+      <div class="row" id="segRow" style="justify-content:space-between">
+        <span style="font-weight:600" id="segLabel">Fakers</span>
         <div class="seg" role="group" aria-label="Number of fakers">
           <button type="button" data-fibs="1" aria-pressed="true">One</button>
           <button type="button" data-fibs="2" aria-pressed="false">Two</button>
@@ -318,7 +421,7 @@ body.at-home header.top .logo{visibility:hidden}
       <p class="status" id="fibNote">Two fakers kicks in only when 6 or more people play.</p>
     </div>
     <button class="btn-big" id="startBtn">Deal the cards</button>
-    <ol class="rules">
+    <ol class="rules" id="rulesList">
       <li>Everyone looks at their secret card. The faker’s card has no word.</li>
       <li>Go around the table. Everyone says one word that fits the secret.</li>
       <li>Talk it over, then vote out the player you think is flaugin’.</li>
@@ -339,9 +442,10 @@ body.at-home header.top .logo{visibility:hidden}
   <!-- ONE-PHONE: CLUES -->
   <section id="vClues" hidden>
     <div>
-      <h2>Clue round</h2>
-      <p class="sub">One word each, in this order. Not too obvious, not too vague.</p>
+      <h2 id="talkTitle">Clue round</h2>
+      <p class="sub" id="talkSub">One word each, in this order. Not too obvious, not too vague.</p>
     </div>
+    <div class="panel prompt-panel" id="talkPrompt" hidden></div>
     <div class="panel"><h3>Speaking order</h3><ol class="order" id="orderList"></ol></div>
     <div class="panel" id="timerPanel">
       <h3>Talk it over</h3>
@@ -357,7 +461,7 @@ body.at-home header.top .logo{visibility:hidden}
   <!-- ONE-PHONE: VOTE -->
   <section id="vVote" hidden>
     <div>
-      <h2>Who’s flaugin’?</h2>
+      <h2 id="voteTitle">Who’s flaugin’?</h2>
       <p class="sub" id="voteSub">Count hands, then tap the player with the most votes.</p>
     </div>
     <div class="panel"><div class="vote-grid" id="voteGrid"></div></div>
@@ -386,10 +490,11 @@ body.at-home header.top .logo{visibility:hidden}
       <p class="verdict" id="resTitle"></p>
       <p class="reveal-line" id="resLine"></p>
     </div>
+    <div id="resDetails"></div>
     <div class="panel">
       <h3>Scoreboard</h3>
       <table class="scores"><tbody id="scoreBody"></tbody></table>
-      <p class="sub" style="font-size:.82rem">Faker escapes: +2. Faker caught but guesses the word: +1. Flaugin caught and misses: +1 to everyone else.</p>
+      <p class="sub" style="font-size:.82rem"><span id="resNote">Faker escapes: +2. Faker caught but guesses the word: +1. Faker caught and misses: +1 to everyone else.</span></p>
     </div>
     <button class="btn-big" id="nextRound">Next round</button>
     <div class="row" style="justify-content:center">
@@ -430,6 +535,7 @@ body.at-home header.top .logo{visibility:hidden}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="content.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

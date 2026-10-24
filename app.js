@@ -60,7 +60,7 @@ const PACK_ORDER=Object.keys(PACKS);
 const GAMES={
   flaugin:{name:"Flaugin",min:3,local:true,seg:"Flaugers",timer:120,timerLabel:"Two-minute talk timer",
     sub:{local:"Everyone shares one phone and takes turns peeking.",host:"Pick a pack, then open a room. Everyone joins on their own phone."},
-    rules:["Flaugin’ is said FLAW-jin, and the player doing it is the Flauger (FLAW-jer). It’s Memphis slang for lying or fronting.","Everyone looks at their secret card. The Flauger’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught Flauger gets one guess at the word to steal the round."]},
+    rules:["Flaugin’ is said FLAW-jin, and the player doing it is the Flauger (FLAW-jer). It’s Memphis slang for lying or fronting.","Everyone looks at their secret card. The Flauger’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught Flauger gets one guess at the word to steal the round.","Optional Clown: knows the word but wants to get voted out. Vote out the Clown and the Clown gets +3, and the Flauger gets away with +2."]},
   copycat:{name:"Parrot",min:3,local:true,seg:"Parrots",timer:90,timerLabel:"90-second debate timer",
     sub:{local:"Everyone shares one phone and peeks at their mission.",host:"Open a room. Everyone gets their mission on their own phone."},
     rules:["Everyone gets a secret mission. The Parrot’s mission is a little different, and they know it, so they have to parrot everyone else.","The TV shows a debate topic. Talk it out while you secretly complete your mission.","Vote for the player you think had the odd mission.","Catch the Parrot: +2 for every correct vote. Parrot escapes: +4."]},
@@ -187,7 +187,7 @@ function clockTitle(g,game,nameFn,me){
   return game==="flaugin"?"Talk it over":game==="glitch"?"Open investigation":game==="rules"?"Time left":"Open debate";
 }
 /* Per-game settings, saved on this device. timer: seconds (0 = off). count: odd players when 6+ play. */
-const CFG_DEFAULTS={flaugin:{study:30,turn:0,timer:120,count:1},copycat:{study:30,turn:60,timer:60,count:1},glitch:{study:30,turn:0,timer:180,count:1,details:2},agenda:{study:30,turn:60,timer:120},rules:{timer:0,kind:"word",guesses:2}};
+const CFG_DEFAULTS={flaugin:{study:30,turn:0,timer:120,count:1,clown:false},copycat:{study:30,turn:60,timer:60,count:1},glitch:{study:30,turn:0,timer:180,count:1,details:2},agenda:{study:30,turn:60,timer:120},rules:{timer:0,kind:"word",guesses:2}};
 function cfg(g){const d=CFG_DEFAULTS[g]||{};return Object.assign({},d,store.get("cfg:"+g,{}))}
 function setCfg(g,k,v){const c=store.get("cfg:"+g,{});c[k]=v;store.set("cfg:"+g,c)}
 (function migrate(){const old=store.get("fibs",null);if(old===2&&!store.get("cfg:flaugin",null))setCfg("flaugin","count",2);
@@ -302,12 +302,14 @@ function cardFront(c){
     let h=c.pack?"Pack: "+c.pack+". Blend in!":"No word for you. Blend in!";
     if(c.twoFibs)h+=" There’s another Flauger too.";
     f.append(el("span",{class:"label",text:"You’re the"}),el("span",{class:"word",text:"Flauger"}),el("span",{class:"hint",text:h}));
+  }else if(c.isClown){
+    f.append(el("span",{class:"label",text:"You’re the Clown 🤡"}),el("span",{class:"word",text:c.word}),el("span",{class:"hint",text:"You know the word, but you WANT to get voted out. Act a little sus!"}));
   }else f.append(el("span",{class:"label",text:"Secret word"}),el("span",{class:"word",text:c.word}),el("span",{class:"hint",text:c.pack?"Pack: "+c.pack:""}));
-  return {front:f,odd:!!c.isFib,tall:false};
+  return {front:f,odd:!!c.isFib,tall:false,clown:!!c.isClown};
 }
 function makeCard(cardData,onPeek){
-  const {front:inner,odd,tall}=cardFront(cardData);
-  const card=el("div",{class:"secret"+(odd?" fib":"")+(tall?" tall":""),tabindex:"0",role:"button","aria-label":"Press and hold to see your card"});
+  const {front:inner,odd,tall,clown}=cardFront(cardData);
+  const card=el("div",{class:"secret"+(odd?" fib":"")+(clown?" clown":"")+(tall?" tall":""),tabindex:"0",role:"button","aria-label":"Press and hold to see your card"});
   const back=el("div",{class:"back"},el("div",{class:"print",text:"?"}),el("span",{text:"Press and hold"}));
   const front=el("div",{class:"front"},inner);
   card.append(back,front);
@@ -326,11 +328,13 @@ function makeCard(cardData,onPeek){
   return el("div",{style:"display:flex;flex-direction:column;align-items:center;gap:14px;width:100%"},card,meter);
 }
 function award(sc,outcome,ids,fibIds,votedId){
+  if(outcome==="clowned"){sc[votedId]=(sc[votedId]||0)+3;fibIds.forEach(k=>sc[k]=(sc[k]||0)+2);return}
   if(outcome==="escaped")fibIds.forEach(k=>sc[k]=(sc[k]||0)+2);
   else if(outcome==="stole")sc[votedId]=(sc[votedId]||0)+1;
   else ids.forEach(k=>{if(!fibIds.includes(k))sc[k]=(sc[k]||0)+1});
 }
 function verdictText(outcome,fibText,votedName){
+  if(outcome==="clowned")return ["Clowned!","lose","You voted out "+votedName+", the Clown. That's exactly what they wanted."];
   return outcome==="escaped"?[fibText+" got away!","lose","You voted out "+votedName+", who knew the word."]:
     outcome==="stole"?[votedName+" guessed it!","lose","Caught, but the Flauger still figured out the word."]:
     ["The family wins!","win","Flauger caught and the word stayed safe."];
@@ -496,6 +500,10 @@ function renderCfg(){
     const few=mode==="local"&&players.length<6;
     box.append(segRow(G.seg,[[1,"One"],[2,"Two",few]],few?1:c.count,set("count"),mode==="local"?(few?"Two unlocks at 6 players.":""):"Two only kicks in when 6 or more phones join."));
   }
+  if(g==="flaugin"){
+    const few=mode==="local"&&players.length<4;
+    box.append(segRow("Clown role",[[false,"Off"],[true,"On",few]],few?false:!!c.clown,set("clown"),"The Clown secretly knows the word but wins by getting voted out. Needs 4 or more players."+(few?" Add more players to turn it on.":"")));
+  }
   if(g==="glitch")box.append(segRow("Details changed",[[1,"1 (hard)"],[2,"2"],[3,"3 (easy)"]],c.details,set("details")));
   if(g==="rules"){
     box.append(segRow("The gate tests",[["word","Words"],["number","Numbers"],["mix","Mix"]],c.kind,set("kind")));
@@ -528,7 +536,9 @@ function startLocalRound(){
   if(curGame==="flaugin"){
     const pid=resolvePack();const pool=poolFor(pid);const word=pool[rnd(pool.length)];markUsed(pid,word);
     const fibIdx=pickFakers(players,count);
-    game={type:"flaugin",pid,word,fibIdx,turn:0,deal:shuffle(players.map((_,i)=>i)),voted:null};
+    const others=players.map((_,i)=>i).filter(i=>!fibIdx.includes(i));
+    const clownIdx=cfg("flaugin").clown&&players.length>=4&&others.length>=3?others[rnd(others.length)]:null;
+    game={type:"flaugin",pid,word,fibIdx,clownIdx,turn:0,deal:shuffle(players.map((_,i)=>i)),voted:null};
   }else{
     const oddIdx=pickFakers(players,count);
     const b=curGame==="copycat"?buildCopycat(ids,oddIdx):buildGlitch(ids,oddIdx);
@@ -537,7 +547,7 @@ function startLocalRound(){
   setTag(GAMES[curGame].name+" · Round "+roundNo);if(!Music.sting("deal"))FX.play("deal");ANN.round(roundNo);showPass();Trans.play("Round "+roundNo,GAMES[curGame].name,{quiet:true});
 }
 function localCard(i){
-  if(game.type==="flaugin"){const isFib=game.fibIdx.includes(i);return {isFib,word:game.word,pack:(!isFib||$("optHint").checked)?PACKS[game.pid].name:null,twoFibs:game.fibIdx.length>1}}
+  if(game.type==="flaugin"){const isFib=game.fibIdx.includes(i);return {isFib,isClown:!isFib&&game.clownIdx===i,word:game.word,pack:(!isFib||$("optHint").checked)?PACKS[game.pid].name:null,twoFibs:game.fibIdx.length>1}}
   return game.built.cards[String(i)];
 }
 function showPass(){
@@ -594,6 +604,7 @@ function showVote(){
 $("lockVote").onclick=()=>{
   const v=game.voted;
   if(game.type!=="flaugin")return finishLocalOdd(v);
+  if(game.clownIdx!=null&&v===game.clownIdx)return finishLocal("clowned");
   if(game.fibIdx.includes(v)){
     $("caughtTitle").textContent="Caught! "+players[v]+" was flaugin’.";
     $("caughtLine").textContent=players[v]+", what do you think the word was?";
@@ -608,9 +619,9 @@ function finishLocal(outcome){
   award(scores,outcome,players,fibNames,players[game.voted]);store.set("scores",scores);
   const [t,cls,line]=verdictText(outcome,fibText,players[game.voted]);
   $("resTitle").className="verdict "+cls;$("resTitle").textContent=t;
-  const l=$("resLine");l.textContent=line+" The word was ";l.append(el("b",{text:game.word}),document.createTextNode(". "+(game.fibIdx.length>1?"The Flaugers: ":"The Flauger: ")+fibText+"."));
+  const l=$("resLine");l.textContent=line+" The word was ";l.append(el("b",{text:game.word}),document.createTextNode(". "+(game.fibIdx.length>1?"The Flaugers: ":"The Flauger: ")+fibText+"."+(game.clownIdx!=null?" The Clown: "+players[game.clownIdx]+".":"")));
   $("resDetails").textContent="";
-  $("resNote").textContent="Flauger escapes: +2. Flauger caught but guesses the word: +1. Flauger caught and misses: +1 to everyone else.";
+  $("resNote").textContent="Flauger escapes: +2. Flauger caught but guesses the word: +1. Flauger caught and misses: +1 to everyone else."+(game.clownIdx!=null?" Clown voted out: +3 to the Clown, +2 to the Flauger.":"");
   renderScoreTable($("scoreBody"),players.map(n=>[n,scores[n]||0]),true);show("vResult");drumThen(outcome==="caught",$("resTitle"),outcome==="stole");
 }
 function finishLocalOdd(v){
@@ -672,7 +683,7 @@ async function openRoom(){
   }catch(e){$("fibNote").className="status err";$("fibNote").textContent=e.message;$("startBtn").disabled=false;$("startBtn").textContent="Open the room"}
 }
 function freshRound(){
-  Object.assign(H,{ready:{},votes:{},voted:null,outcome:"",tally:null,tie:false,showWord:false,endsAt:0,word:"",fib:[],
+  Object.assign(H,{ready:{},votes:{},voted:null,outcome:"",tally:null,tie:false,showWord:false,endsAt:0,word:"",fib:[],clown:null,hasClown:false,
     meta:null,secret:null,first:{},final:{},log:[],solved:[],guesses:{},tryAt:{},rp:{},reveal:null,err:""});
 }
 function resumeRoom(h){
@@ -773,7 +784,7 @@ function publicState(){
   const showSecret=H.phase==="result"||(H.phase==="guess"&&H.showWord);
   return {code:H.code,game:H.game,epoch:H.epoch,phase:H.phase,round:H.round,roster:H.roster,order:H.order,voteRound:H.voteRound,
     ready:Object.keys(H.ready),voted:Object.keys(H.votes),votedOut:H.voted,outcome:H.outcome,endsAt:H.endsAt,clock:clockPublic(),showWord:H.showWord,
-    word:H.game==="flaugin"&&showSecret?H.word:null,fib:H.game==="flaugin"&&H.phase==="result"?H.fib:null,
+    word:H.game==="flaugin"&&showSecret?H.word:null,fib:H.game==="flaugin"&&H.phase==="result"?H.fib:null,clown:H.game==="flaugin"&&H.phase==="result"?H.clown:null,hasClown:H.game==="flaugin"&&!!H.hasClown,
     meta:H.meta,firstIn:Object.keys(H.first),finalIn:Object.keys(H.final),
     log:H.game==="rules"?H.log.slice(-12):null,solved:H.solved,guesses:H.guesses,maxGuesses:H.maxGuesses||2,
     reveal:H.phase==="result"?H.reveal:null,
@@ -831,9 +842,9 @@ async function hostDeal(){
   try{
     if(H.game==="flaugin"){
       const pid=resolvePack();
-      const r=await api({action:"deal",code:H.code,hostToken:H.hostToken,playerIds:ids,words:poolFor(pid),pack:PACKS[pid].name,hint:$("optHint").checked,fibs:oddCount(ids.length,"flaugin"),weights:oddWeights(ids)});
+      const r=await api({action:"deal",code:H.code,hostToken:H.hostToken,playerIds:ids,words:poolFor(pid),pack:PACKS[pid].name,hint:$("optHint").checked,fibs:oddCount(ids.length,"flaugin"),weights:oddWeights(ids),clown:!!cfg("flaugin").clown&&ids.length>=4});
       H.roster=roster;roster.forEach(x=>H.names[x.pid]=x.name);freshRound();
-      H.round=r.round;H.packId=pid;H.hint=$("optHint").checked;
+      H.round=r.round;H.packId=pid;H.hasClown=!!r.clown;H.hint=$("optHint").checked;
     }else if(H.game==="rules"){
       H.roster=roster;roster.forEach(x=>H.names[x.pid]=x.name);freshRound();
       const b=buildRules();H.meta=b.meta;H.secret=b.secret;H.round=H.round+1;
@@ -870,9 +881,10 @@ async function hostReveal(force){
     return setPhase("result");
   }
   H.voted=top[0];
-  try{const r=await api({action:"reveal",code:H.code,hostToken:H.hostToken});H.word=r.word;H.fib=r.fib;markUsed(H.packId,r.word);noteOdd(r.fib)}
+  try{const r=await api({action:"reveal",code:H.code,hostToken:H.hostToken});H.word=r.word;H.fib=r.fib;H.clown=r.clown||null;markUsed(H.packId,r.word);noteOdd(r.fib)}
   catch(e){H.err=e.message;renderHost();return}
   H.err="";
+  if(H.clown&&H.voted===H.clown)return hostFinish("clowned");
   if(H.fib.includes(H.voted))setPhase("guess");else hostFinish("escaped");
 }
 function hostRevote(){H.voteRound++;H.votes={};H.tally=null;H.tie=false;setPhase("vote")}
@@ -981,6 +993,7 @@ function renderHostFlaugin(main,side){
   if(H.phase==="clues"){
     main.append(el("p",{class:"big-msg",text:"One word each, in this order."}));
     main.append(el("div",{class:"panel"},el("h3",{text:"Speaking order"}),orderList()));
+    if(H.hasClown)main.append(el("p",{class:"sub",text:"🤡 There's a Clown this round. Careful who you vote out!"}));
     main.append(el("button",{class:"btn-big",text:"Time to vote",onclick:()=>{H.voteRound++;H.votes={};H.endsAt=0;setPhase("vote")}}));
     add(side,clockPanel());
     if(H.hint)side.append(el("div",{class:"panel"},el("h3",{text:"Pack"}),el("p",{style:"margin:0;font-size:1.2rem;font-weight:800",text:PACKS[H.packId].name})));
@@ -997,8 +1010,8 @@ function renderHostFlaugin(main,side){
   if(H.phase==="result"){
     const fibNames=H.fib.map(nameOf);const [t,cls,line]=verdictText(H.outcome,fibNames.join(" and "),nameOf(H.voted));
     main.append(el("p",{class:"verdict "+cls,text:t}));
-    const l=el("p",{class:"reveal-line",text:line+" The word was "});l.append(el("b",{text:H.word}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."));main.append(l);
-    const sb2=scoreboard();sb2.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Flauger escapes: +2. Caught but guesses the word: +1. Caught and misses: +1 to everyone else."}));main.append(sb2);
+    const l=el("p",{class:"reveal-line",text:line+" The word was "});l.append(el("b",{text:H.word}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."+(H.clown?" The Clown: "+nameOf(H.clown)+".":"")));main.append(l);
+    const sb2=scoreboard();sb2.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Flauger escapes: +2. Caught but guesses the word: +1. Caught and misses: +1 to everyone else."+(H.clown?" Clown voted out: +3 to the Clown, +2 to the Flauger.":"")}));main.append(sb2);
     resultFooter(main);
     side.append(el("div",{class:"panel"},el("h3",{text:"The votes"}),tallyBars(true)),joinCard());return;
   }
@@ -1128,7 +1141,7 @@ function tallyBars(markOdd,oddList){
   const odd=oddList||(H.game==="flaugin"?H.fib:[]);
   const t=el("div",{class:"tally"});const c=H.tally||tally();const max=Math.max(1,...Object.values(c));
   const tag=H.game==="flaugin"?" (flaugin’)":H.game==="copycat"?" (Parrot)":" (tweakin’)";
-  Object.keys(c).sort((a,b)=>c[b]-c[a]).forEach(k=>t.append(el("div",{class:"bar"},el("span",{text:nameOf(k)+(markOdd&&odd.includes(k)?tag:"")}),el("i",{style:"width:"+(c[k]/max*100)+"%"}),el("b",{text:String(c[k])}))));
+  Object.keys(c).sort((a,b)=>c[b]-c[a]).forEach(k=>t.append(el("div",{class:"bar"},el("span",{text:nameOf(k)+(markOdd&&odd.includes(k)?tag:markOdd&&H.game==="flaugin"&&H.clown===k?" (Clown)":"")}),el("i",{style:"width:"+(c[k]/max*100)+"%"}),el("b",{text:String(c[k])}))));
   return t;
 }
 let closeArmed=0;
@@ -1200,7 +1213,7 @@ function onState(s){
   if(changed)renderPlayer();
 }
 function phoneScored(s){
-  if(s.game==="flaugin"){const fib=s.fib||[];const am=fib.includes(P.pid);return s.outcome==="escaped"?am:s.outcome==="stole"?s.votedOut===P.pid:!am}
+  if(s.game==="flaugin"){const fib=s.fib||[];const am=fib.includes(P.pid);return s.outcome==="clowned"?(am||s.votedOut===P.pid):s.outcome==="escaped"?am:s.outcome==="stole"?s.votedOut===P.pid:!am}
   return !!((s.reveal||{}).rp||{})[P.pid];
 }
 function phoneFx(prev,s,inRound){
@@ -1318,6 +1331,7 @@ function renderPlayerInner(){
     const g=el("div",{class:"vote-grid"});
     s.roster.filter(r=>r.pid!==P.pid).forEach(r=>g.append(el("button",{type:"button",text:r.name,"aria-pressed":String(mine===r.pid),onclick:()=>{P.vote={r:s.voteRound,target:r.pid};sendVote();FX.play("vote");FX.vibrate(20);renderPlayer()}})));
     v.append(el("div",{class:"panel"},g));
+    if(P.card&&P.card.isClown)v.append(el("p",{class:"status on-felt",text:"You’re the Clown. You want them to vote for YOU!"}));
     if(P.card&&(P.card.isFib||P.card.odd))v.append(el("p",{class:"status on-felt",text:s.game==="flaugin"?"You’re the Flauger. Vote for someone else to keep your cover.":"You’re the Parrot. Vote for someone else to keep your cover."}));
     return;
   }
@@ -1341,9 +1355,9 @@ function renderPlayerInner(){
       const fibIds=s.fib||[];const fibNames=fibIds.map(p=>rosterName(s,p));
       const [t]=verdictText(s.outcome,fibNames.join(" and "),rosterName(s,s.votedOut));
       const amFib=fibIds.includes(P.pid);
-      const scored=s.outcome==="escaped"?amFib:s.outcome==="stole"?s.votedOut===P.pid:!amFib;
+      const scored=phoneScored(s);
       v.append(el("p",{class:"verdict "+(scored?"win":"lose"),text:scored?"You scored!":t}));
-      const l=el("p",{class:"reveal-line",text:"The word was "});l.append(el("b",{text:s.word||"?"}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."));
+      const l=el("p",{class:"reveal-line",text:"The word was "});l.append(el("b",{text:s.word||"?"}),document.createTextNode(". "+(fibNames.length>1?"The Flaugers: ":"The Flauger: ")+fibNames.join(" and ")+"."+(s.clown?" The Clown: "+rosterName(s,s.clown)+".":"")));
       v.append(l,myScore(s),el("p",{class:"sub",text:"The next round starts from the big screen."}));
       return;
     }

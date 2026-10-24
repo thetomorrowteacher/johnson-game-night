@@ -18,3 +18,9 @@ Content for every game lives in `content.js`.
 - Live rooms use Supabase Realtime (broadcast + presence).
 - Secret cards come from the `flaudjer` Supabase edge function, so each phone only receives its own card. The word and Flaugin list never reach other phones until the reveal.
 - Data lives in `flaudjer_rooms` / `flaudjer_players` (RLS on, no browser access). Rooms older than a day are cleaned up automatically.
+
+## Sound
+
+- Theme music: "Game Show Grind" (`theme.mp3`), supplied by the Johnsons.
+- Announcer: Kenney Voiceover Pack #1 by Kenney Vleugels (kenney.nl), CC0, the same female/male voice clips PFLX uses in X-Live and Battle Arena (`announcer/`).
+- Sound effects are synthesized in the browser (`fx.js`), so there are no extra files.

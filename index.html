@@ -319,13 +319,69 @@ body.tv .fs-btn{padding:10px 16px;font-size:.95rem}
 .music-btn[aria-pressed=true]{background:var(--sky);color:var(--felt);box-shadow:0 3px 0 var(--felt)}
 .music-btn .m-on{display:none}.music-btn[aria-pressed=true] .m-on{display:block}.music-btn[aria-pressed=true] .m-off{display:none}
 header.top>.row{gap:8px}
+
+/* ================= Motion ================= */
+.confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+.resume.live{background:rgba(246,194,28,.16);box-shadow:inset 0 0 0 2px var(--sky)}
+.plus{color:var(--win);font-weight:800;font-size:.85em;margin-left:4px}
+.timer.hurry{color:var(--berry)}
+@media (prefers-reduced-motion:no-preference){
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes pop{0%{opacity:0;transform:scale(.4)}70%{transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
+  @keyframes drop{0%{opacity:0;transform:translateY(-60%) rotate(-8deg)}70%{transform:translateY(6%)}100%{opacity:1;transform:none}}
+  @keyframes flipIn{from{opacity:.1;transform:perspective(700px) rotateY(85deg) scale(.95)}to{opacity:1;transform:none}}
+  @keyframes verdict{0%{opacity:0;transform:scale(.35) rotate(-5deg)}60%{opacity:1;transform:scale(1.08) rotate(1deg)}100%{opacity:1;transform:none}}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @keyframes stamp{0%{opacity:0;transform:scale(1.8)}60%{opacity:1;transform:scale(.94)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+  @keyframes glow{0%{box-shadow:0 0 0 0 rgba(47,154,43,.8)}100%{box-shadow:0 0 0 22px rgba(47,154,43,0)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes titleIn{0%{opacity:0;transform:scale(.6) rotate(-3deg)}70%{transform:scale(1.04)}100%{opacity:1;transform:none}}
+  @keyframes sheen{0%{background-position:-150% 0}100%{background-position:250% 0}}
+  .view-in>*{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+  .view-in>*:nth-child(2){animation-delay:.06s}.view-in>*:nth-child(3){animation-delay:.12s}.view-in>*:nth-child(4){animation-delay:.18s}
+  .view-in>*:nth-child(5){animation-delay:.24s}.view-in>*:nth-child(6){animation-delay:.3s}.view-in>*:nth-child(7){animation-delay:.36s}.view-in>*:nth-child(n+8){animation-delay:.42s}
+  .chip.pop{animation:pop .55s cubic-bezier(.3,1.5,.5,1) both}
+  .pin span{display:inline-block;animation:drop .7s cubic-bezier(.3,1.4,.5,1) both}
+  .secret.peek .front{animation:flipIn .3s ease-out both}
+  .secret{transition:transform .18s ease}.secret:active{transform:scale(.98)}
+  .big-in{animation:verdict .75s cubic-bezier(.2,1.3,.4,1) both}
+  .tally .bar i{transform-origin:left center;animation:grow 1s cubic-bezier(.2,.8,.2,1) .4s both}
+  .rise-rows tr{animation:rise .5s ease both}
+  .gate.fresh .entry{animation:stamp .45s cubic-bezier(.3,1.5,.5,1) both}
+  .gate.fresh .nope{animation:shake .45s ease both}
+  .gate.fresh .yes{animation:glow 1s ease-out both,stamp .45s ease both}
+  .timer.hurry{animation:pulse 1s ease-in-out infinite}
+  .hub-title{animation:titleIn .9s cubic-bezier(.2,1.3,.4,1) .15s both}
+  .hero-logo{animation:floaty 6s ease-in-out infinite}
+  .join-hero{background-image:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);background-size:200% 100%;background-repeat:no-repeat;animation:sheen 4.5s ease-in-out 1.2s infinite}
+  .game-tile{transition:transform .25s ease,box-shadow .25s ease}
+  .game-tile:hover{transform:translateY(-5px) rotate(-.3deg)}
+  button{transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
+  button:hover:not(:disabled){filter:brightness(1.06)}
+  .btn-big:hover:not(:disabled){transform:translateY(-2px)}
+  .vote-grid button[aria-pressed=true],.opt-btns button[aria-pressed=true]{animation:pop .35s ease both}
+  .opt.win{animation:pulse 1.4s ease-in-out 1.2s 3}
+  .solved{animation:pop .5s ease both}
+}
+
+/* Header buttons: icons only, labels only on the big in-room TV layout */
+header.top{flex-wrap:nowrap}
+header.top .logo{flex:0 1 auto;min-width:0}
+header.top>.row{flex-wrap:nowrap;justify-content:flex-end;min-width:0}
+.fs-btn .fs-label{display:none}
+.fs-btn{padding:8px}
+body.tv .fs-btn .fs-label{display:inline}
+body.tv .fs-btn{padding:8px 14px}
+header.top .round-tag{min-width:0;text-align:right;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
   <header class="top">
     <button class="logo" id="homeLink" aria-label="Game Night home"><img src="logo.png" alt="" width="84" height="52"><span class="logo-text">Game <span>Night</span></span></button>
-    <span class="row" style="gap:12px"><span class="conn" id="conn" hidden><i></i><span>Live</span></span><span class="round-tag" id="roundTag"></span><button class="fs-btn music-btn" id="musicBtn" type="button" aria-label="Theme music" title="Theme music (M)" aria-pressed="false"><svg class="m-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><svg class="m-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg><span class="fs-label">Music</span></button><button class="fs-btn" id="fsBtn" type="button" aria-label="Full screen" title="Full screen (F)" hidden><svg class="fs-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg class="fs-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span class="fs-label">Full screen</span></button></span>
+    <span class="row" style="gap:12px"><span class="conn" id="conn" hidden><i></i><span>Live</span></span><span class="round-tag" id="roundTag"></span><button class="fs-btn music-btn" id="sfxBtn" type="button" aria-label="Sound effects and announcer" title="Sound effects (S)" aria-pressed="true"><svg class="m-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg><svg class="m-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg><span class="fs-label">Sounds</span></button><button class="fs-btn music-btn" id="musicBtn" type="button" aria-label="Theme music" title="Theme music (M)" aria-pressed="false"><svg class="m-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><svg class="m-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg><span class="fs-label">Music</span></button><button class="fs-btn" id="fsBtn" type="button" aria-label="Full screen" title="Full screen (F)" hidden><svg class="fs-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg class="fs-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span class="fs-label">Full screen</span></button></span>
   </header>
 
   <!-- HOME: Game Night hub -->
@@ -422,6 +478,14 @@ header.top>.row{gap:8px}
       <h3>House rules</h3>
       <label class="toggle" id="hintRow"><input type="checkbox" id="optHint" checked><span>The faker sees the pack name<small>Recommended for younger players.</small></span></label>
       <label class="toggle" id="timerRow"><input type="checkbox" id="optTimer" checked><span><span id="timerLabel">Two-minute talk timer</span><small>Keeps the discussion moving before the vote.</small></span></label>
+      <div class="row" id="voiceRow" style="justify-content:space-between">
+        <span style="font-weight:600">Announcer</span>
+        <div class="seg" role="group" aria-label="Announcer voice">
+          <button type="button" data-voice="female" aria-pressed="true">Female</button>
+          <button type="button" data-voice="male" aria-pressed="false">Male</button>
+          <button type="button" data-voice="off" aria-pressed="false">Off</button>
+        </div>
+      </div>
       <div class="row" id="kindRow" style="justify-content:space-between" hidden>
         <span style="font-weight:600">The gate tests</span>
         <div class="seg" role="group" aria-label="What players test">
@@ -554,7 +618,8 @@ header.top>.row{gap:8px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="content.js?v=202610241712"></script>
-<script src="app.js?v=202610241712"></script>
+<script src="fx.js?v=202610241723"></script>
+<script src="content.js?v=202610241723"></script>
+<script src="app.js?v=202610241723"></script>
 </body>
 </html>

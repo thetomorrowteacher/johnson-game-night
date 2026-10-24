@@ -1,7 +1,7 @@
 /* Johnson Family Game Night.
    The TV hosts a live room (Supabase Realtime); phones join with a PIN or QR.
    Private cards come from the `flaudjer` edge function, so each phone only ever sees its own card.
-   Games: Flaugin, Copycat, The Glitch, Secret Agenda, Rulebreakers. */
+   Games: Flaugin, Parrot (id copycat), Tweakin (id glitch), Secret Agenda, RuleBreakers (id rules). */
 (function(){
 "use strict";
 const SB_URL="https://hyxiagexyptzvetqjmnj.supabase.co";   // PFLX Applications project (gamenight_* tables)
@@ -30,7 +30,7 @@ const Trans=(function(){
 function sceneFor(game,phase,round){
   const G=GAMES[game]||{name:"Game Night"};
   if(phase==="cards")return ["Round "+round,G.name];
-  if(phase==="play")return ["Open the gate!","Rulebreakers · Round "+round];
+  if(phase==="play")return ["Open the gate!","RuleBreakers · Round "+round];
   if(phase==="clues")return ["Clue time!","One word each"];
   if(phase==="talk")return game==="copycat"?["Debate!","Sneak in your mission"]:game==="glitch"?["Investigate!","Ask questions"]:["Make your case!","Debate and make deals"];
   if(phase==="vote")return ["Vote!",G.name];
@@ -61,16 +61,16 @@ const GAMES={
   flaugin:{name:"Flaugin",min:3,local:true,seg:"Flaugers",timer:120,timerLabel:"Two-minute talk timer",
     sub:{local:"Everyone shares one phone and takes turns peeking.",host:"Pick a pack, then open a room. Everyone joins on their own phone."},
     rules:["Flaugin’ is said FLAW-jin, and the player doing it is the Flauger (FLAW-jer). It’s Memphis slang for lying or fronting.","Everyone looks at their secret card. The Flauger’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught Flauger gets one guess at the word to steal the round."]},
-  copycat:{name:"Copycat",min:3,local:true,seg:"Copycats",timer:90,timerLabel:"90-second debate timer",
+  copycat:{name:"Parrot",min:3,local:true,seg:"Parrots",timer:90,timerLabel:"90-second debate timer",
     sub:{local:"Everyone shares one phone and peeks at their mission.",host:"Open a room. Everyone gets their mission on their own phone."},
-    rules:["Everyone gets a secret mission. The Copycat’s mission is a little different, and they know it.","The TV shows a debate topic. Talk it out while you secretly complete your mission.","Vote for the player you think had the odd mission.","Catch the Copycat: +2 for every correct vote. Copycat escapes: +4."]},
-  glitch:{name:"The Glitch",min:3,local:true,seg:"Glitched files",timer:180,timerLabel:"3-minute investigation timer",
+    rules:["Everyone gets a secret mission. The Parrot’s mission is a little different, and they know it, so they have to parrot everyone else.","The TV shows a debate topic. Talk it out while you secretly complete your mission.","Vote for the player you think had the odd mission.","Catch the Parrot: +2 for every correct vote. Parrot escapes: +4."]},
+  glitch:{name:"Tweakin",min:3,local:true,seg:"Players tweakin’",timer:180,timerLabel:"3-minute investigation timer",
     sub:{local:"Everyone shares one phone and reads their case file.",host:"Open a room. Everyone reads their case file on their own phone."},
-    rules:["Everyone gets the same case file, except one file has two details changed.","Nobody knows if their file is the glitched one, not even the glitched player.","Ask questions and compare details. Don’t just read your file out loud!","Find the glitch: +3 for every correct vote. Glitch slips through: +4."]},
+    rules:["Tweakin’ (TWEE-kin) is Black American slang for acting off or getting it wrong.","Everyone gets the same case file, except one file has some details changed.","Nobody knows if their file is the one that’s off, not even the player who’s tweakin’.","Ask questions and compare details. Don’t just read your file out loud!","Catch who’s tweakin’: +3 for every correct vote. Get away with it: +4."]},
   agenda:{name:"Secret Agenda",min:3,local:false,seg:null,timer:180,timerLabel:"3-minute debate timer",
     sub:{host:"Open a room. Everyone gets a secret agenda on their phone."},
     rules:["The TV shows a family decision with four choices.","Everyone gets a secret agenda and makes a secret first pick.","Debate and negotiate, then everyone casts a final vote.","Every agenda that comes true scores 3 points. Allies and rivals are revealed at the end."]},
-  rules:{name:"Rulebreakers",min:2,local:false,seg:null,timer:0,timerLabel:"",
+  rules:{name:"RuleBreakers",min:2,local:false,seg:null,timer:0,timerLabel:"",
     sub:{host:"Open a room. Everyone tests words on their own phone."},
     rules:["The gate on the TV has a secret rule.","Type a word or number on your phone. The TV shows ACCEPTED or REJECTED for everyone.","When you think you know the rule, pick it from the list. Guesses are limited (2 by default).","First to crack it: +5. Everyone else who cracks it: +2."]}
 };
@@ -204,7 +204,7 @@ function buildCopycat(ids,oddIdx){
   const odd=oddIdx.map(i=>ids[i]);const cards={};
   ids.forEach(id=>{
     cards[id]=odd.includes(id)
-      ?{kind:"copycat",odd:true,label:"You’re the Copycat",text:r.copy,hint:"Everyone else has a different mission. Blend in!"+(odd.length>1?" There’s another Copycat too.":"")}
+      ?{kind:"copycat",odd:true,label:"You’re the Parrot",text:r.copy,hint:"Everyone else has a different mission. Blend in!"+(odd.length>1?" There’s another Parrot too.":"")}
       :{kind:"copycat",odd:false,label:"Your mission",text:r.crowd,hint:"Someone has a different mission. Find them."};
   });
   return {meta:{prompt:r.prompt},cards,secret:{odd,crowd:r.crowd,copy:r.copy}};
@@ -350,7 +350,7 @@ function renderScoreTable(body,rows,animate){
   if(animate)body.closest("table")&&body.closest("table").classList.add("rise-rows");
 }
 /* Reveal panels shared by TV, phones and one-phone mode */
-function oddLabel(game,n){return game==="copycat"?(n>1?"Copycats":"Copycat"):(n>1?"Glitched files":"Glitched file")}
+function oddLabel(game,n){return game==="copycat"?(n>1?"Parrots":"Parrot"):(n>1?"Players tweakin’":"Player tweakin’")}
 function revealDetails(game,rv,nameOf){
   if(game==="copycat"){
     return el("div",{class:"panel"},el("h3",{text:"The missions"}),
@@ -361,9 +361,9 @@ function revealDetails(game,rv,nameOf){
     const tb=el("tbody");
     rv.truth.forEach((f,i)=>{
       const bad=rv.changed.includes(i);
-      tb.append(el("tr",null,el("td",{text:f[0]}),el("td",null,el("span",{text:f[1]}),bad?el("div",{class:"bad",text:"Glitch said: "+rv.glitched[i][1]}):null)));
+      tb.append(el("tr",null,el("td",{text:f[0]}),el("td",null,el("span",{text:f[1]}),bad?el("div",{class:"bad",text:"Their file said: "+rv.glitched[i][1]}):null)));
     });
-    return el("div",{class:"panel"},el("h3",{text:"The real case file · glitched: "+rv.odd.map(nameOf).join(" and ")}),el("table",{class:"truth"},tb));
+    return el("div",{class:"panel"},el("h3",{text:"The real case file · tweakin’: "+rv.odd.map(nameOf).join(" and ")}),el("table",{class:"truth"},tb));
   }
   return el("span");
 }
@@ -517,7 +517,7 @@ $("startBtn").onclick=()=>{
 };
 
 /* =====================================================================
-   ONE-PHONE MODE (no network): Flaugin, Copycat, The Glitch
+   ONE-PHONE MODE (no network): Flaugin, Parrot, Tweakin
    ===================================================================== */
 let game=null;
 function startLocalRound(){
@@ -586,7 +586,7 @@ function showVote(){
   game.voted=null;const g=$("voteGrid");g.textContent="";
   players.forEach((n,i)=>{const b=el("button",{type:"button",text:n,"aria-pressed":"false"});
     b.onclick=()=>{game.voted=i;g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));$("lockVote").disabled=false;$("lockVote").textContent="Reveal "+n};g.append(b)});
-  $("voteTitle").textContent=game.type==="flaugin"?"Who’s flaugin’?":game.type==="copycat"?"Who’s the Copycat?":"Whose file is glitched?";
+  $("voteTitle").textContent=game.type==="flaugin"?"Who’s flaugin’?":game.type==="copycat"?"Who’s the Parrot?":"Who’s tweakin’?";
   const two=game.fibIdx.length>1;
   $("voteSub").textContent=two?"There are two this round. Vote one out; catching either counts.":"Count hands, then tap the player with the most votes.";
   $("lockVote").disabled=true;$("lockVote").textContent="Reveal";show("vVote");Trans.play("Vote!",GAMES[game.type].name,{quiet:true});
@@ -620,11 +620,11 @@ function finishLocalOdd(v){
   else oddNames.forEach(n=>scores[n]=(scores[n]||0)+4);
   store.set("scores",scores);
   $("resTitle").className="verdict "+(caught?"win":"lose");
-  $("resTitle").textContent=caught?(copy?"Copycat caught!":"Glitch found!"):(copy?oddNames.join(" and ")+" got away!":"The glitch slipped through!");
-  $("resLine").textContent=caught?"You voted for "+players[v]+". Nice detective work.":"You voted for "+players[v]+", but the "+(copy?"Copycat":"glitched file")+" was "+oddNames.join(" and ")+".";
+  $("resTitle").textContent=caught?(copy?"Parrot caught!":"Caught tweakin’!"):(copy?oddNames.join(" and ")+" got away!":"Nobody caught who was tweakin’!");
+  $("resLine").textContent=caught?"You voted for "+players[v]+". Nice detective work.":"You voted for "+players[v]+", but the "+(copy?"Parrot":"one tweakin’")+" was "+oddNames.join(" and ")+".";
   const rv=Object.assign({},game.built.secret,{odd:game.fibIdx.map(String)});
   $("resDetails").textContent="";$("resDetails").append(revealDetails(game.type,rv,id=>players[+id]));
-  $("resNote").textContent="Caught: +2 to everyone else. Got away: +4 to the "+(copy?"Copycat":"glitched player")+".";
+  $("resNote").textContent="Caught: +2 to everyone else. Got away: +4 to the "+(copy?"Parrot":"one tweakin’")+".";
   renderScoreTable($("scoreBody"),players.map(n=>[n,scores[n]||0]),true);show("vResult");drumThen(caught,$("resTitle"));
 }
 /* drumroll, then the verdict lands with a fanfare (and confetti) or a sad trombone */
@@ -1032,13 +1032,13 @@ function renderHostOdd(main,side){
     add(side,clockPanel());
     return;
   }
-  if(H.phase==="vote"){renderVote(main,side,copy?"Who’s the Copycat? Vote on your phone.":"Whose file is glitched? Vote on your phone.");side.prepend(prompt());return}
+  if(H.phase==="vote"){renderVote(main,side,copy?"Who’s the Parrot? Vote on your phone.":"Who’s tweakin’? Vote on your phone.");side.prepend(prompt());return}
   if(H.phase==="result"){
     const rv=H.reveal;const oddNames=rv.odd.map(nameOf);
-    main.append(el("p",{class:"verdict "+(rv.caught?"win":"lose"),text:rv.caught?(copy?"Copycat caught!":"Glitch found!"):(copy?oddNames.join(" and ")+" got away!":"The glitch slipped through!")}));
-    main.append(el("p",{class:"reveal-line",text:rv.caughtId?"Most votes: "+nameOf(rv.caughtId)+". The "+(copy?"Copycat":"glitched file")+" was "+oddNames.join(" and ")+".":"No clear vote. "+oddNames.join(" and ")+" "+(oddNames.length>1?"were":"was")+" the "+(copy?"Copycat":"glitch")+"."}));
+    main.append(el("p",{class:"verdict "+(rv.caught?"win":"lose"),text:rv.caught?(copy?"Parrot caught!":"Caught tweakin’!"):(copy?oddNames.join(" and ")+" got away!":"Nobody caught who was tweakin’!")}));
+    main.append(el("p",{class:"reveal-line",text:rv.caughtId?"Most votes: "+nameOf(rv.caughtId)+". The "+(copy?"Parrot":"one tweakin’")+" was "+oddNames.join(" and ")+".":"No clear vote. "+oddNames.join(" and ")+" "+(oddNames.length>1?"were":"was")+" "+(copy?"the Parrot":"tweakin’")+"."}));
     main.append(revealDetails(H.game,rv,nameOf));
-    const sb2=scoreboard();sb2.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Correct vote: +"+(copy?2:3)+". Not caught: +4 to the "+(copy?"Copycat":"glitched player")+"."}));main.append(sb2);
+    const sb2=scoreboard();sb2.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Correct vote: +"+(copy?2:3)+". Not caught: +4 to the "+(copy?"Parrot":"one tweakin’")+"."}));main.append(sb2);
     resultFooter(main);
     side.append(el("div",{class:"panel"},el("h3",{text:"The votes"}),tallyBars(true,rv.odd)),joinCard());return;
   }
@@ -1127,7 +1127,7 @@ function renderHostRules(main,side){
 function tallyBars(markOdd,oddList){
   const odd=oddList||(H.game==="flaugin"?H.fib:[]);
   const t=el("div",{class:"tally"});const c=H.tally||tally();const max=Math.max(1,...Object.values(c));
-  const tag=H.game==="flaugin"?" (flaugin’)":H.game==="copycat"?" (Copycat)":" (glitched)";
+  const tag=H.game==="flaugin"?" (flaugin’)":H.game==="copycat"?" (Parrot)":" (tweakin’)";
   Object.keys(c).sort((a,b)=>c[b]-c[a]).forEach(k=>t.append(el("div",{class:"bar"},el("span",{text:nameOf(k)+(markOdd&&odd.includes(k)?tag:"")}),el("i",{style:"width:"+(c[k]/max*100)+"%"}),el("b",{text:String(c[k])}))));
   return t;
 }
@@ -1313,12 +1313,12 @@ function renderPlayerInner(){
   }
   if(s.phase==="vote"){
     const mine=P.vote&&P.vote.r===s.voteRound?P.vote.target:null;
-    const q=s.game==="flaugin"?"Who’s flaugin’?":s.game==="copycat"?"Who’s the Copycat?":"Whose file is glitched?";
+    const q=s.game==="flaugin"?"Who’s flaugin’?":s.game==="copycat"?"Who’s the Parrot?":"Who’s tweakin’?";
     v.append(el("p",{class:"big-msg",text:q}),el("p",{class:"sub",text:mine?"Vote sent. Tap another name to change it.":"Tap one name. Votes stay secret until the reveal."}));
     const g=el("div",{class:"vote-grid"});
     s.roster.filter(r=>r.pid!==P.pid).forEach(r=>g.append(el("button",{type:"button",text:r.name,"aria-pressed":String(mine===r.pid),onclick:()=>{P.vote={r:s.voteRound,target:r.pid};sendVote();FX.play("vote");FX.vibrate(20);renderPlayer()}})));
     v.append(el("div",{class:"panel"},g));
-    if(P.card&&(P.card.isFib||P.card.odd))v.append(el("p",{class:"status on-felt",text:s.game==="flaugin"?"You’re the Flauger. Vote for someone else to keep your cover.":"You’re the Copycat. Vote for someone else to keep your cover."}));
+    if(P.card&&(P.card.isFib||P.card.odd))v.append(el("p",{class:"status on-felt",text:s.game==="flaugin"?"You’re the Flauger. Vote for someone else to keep your cover.":"You’re the Parrot. Vote for someone else to keep your cover."}));
     return;
   }
   if(s.phase==="final"){
@@ -1350,7 +1350,7 @@ function renderPlayerInner(){
     const rv=s.reveal||{};const got=(rv.rp||{})[P.pid]||0;
     v.append(el("p",{class:"verdict "+(got?"win":"lose"),text:got?"You scored +"+got+"!":"No points this round."}));
     if(s.game==="copycat"||s.game==="glitch"){
-      v.append(el("p",{class:"reveal-line",text:rv.caught?(s.game==="copycat"?"The Copycat was caught.":"The glitch was found."):(s.game==="copycat"?"The Copycat got away.":"The glitch slipped through.")}));
+      v.append(el("p",{class:"reveal-line",text:rv.caught?(s.game==="copycat"?"The Parrot was caught.":"Caught who was tweakin’."):(s.game==="copycat"?"The Parrot got away.":"Nobody caught who was tweakin’.")}));
       v.append(revealDetails(s.game,rv,id=>rosterName(s,id)));
     }else if(s.game==="agenda"){
       const row=(rv.rows||[]).find(r=>r.pid===P.pid);
@@ -1378,7 +1378,7 @@ function renderPlayerRules(v,s,draft,hadFocus,openDetails){
     return;
   }
   const solved=(s.solved||[]).includes(P.pid);const used=(s.guesses||{})[P.pid]||0;
-  v.append(el("p",{class:"eyebrow",text:"Rulebreakers · round "+s.round}),el("p",{class:"big-msg",text:solved?"You cracked it!":"Test the gate."}));
+  v.append(el("p",{class:"eyebrow",text:"RuleBreakers · round "+s.round}),el("p",{class:"big-msg",text:solved?"You cracked it!":"Test the gate."}));
   const inp=el("input",{type:"text",id:"tryInput",maxlength:m.kind==="number"?"4":"15",inputmode:m.kind==="number"?"numeric":"text",autocomplete:"off",autocapitalize:"off",spellcheck:"false",placeholder:m.kind==="number"?"Type a number":"Type a word","aria-label":m.kind==="number"?"Number to test":"Word to test"});
   inp.value=draft||"";
   const err=el("p",{class:"status err",style:"margin:0",text:P.tryErr||""});

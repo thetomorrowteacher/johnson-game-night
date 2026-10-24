@@ -1,8 +1,8 @@
 /* Johnson Family Game Night: game content (family-friendly, ages 8+). */
 window.GN_CONTENT = {
 
-/* ---------------- COPYCAT ----------------
-   prompt: shown on the TV. crowd: everyone's mission. copy: the Copycat's mission.
+/* ---------------- PARROT (id: copycat) ----------------
+   prompt: shown on the TV. crowd: everyone's mission. copy: the Parrot's mission.
    Mix of debate rounds (pick a side) and sneaky behavior rounds. */
 copycat: [
   {prompt:"What's the best breakfast?", crowd:"Argue that pancakes are the best breakfast.", copy:"Argue that waffles are the best breakfast."},
@@ -33,7 +33,7 @@ copycat: [
   {prompt:"What should a robot butler do?", crowd:"Say it should clean your room.", copy:"Say it should do your homework."}
 ],
 
-/* ---------------- THE GLITCH ----------------
+/* ---------------- TWEAKIN (id: glitch) ----------------
    title + scene go on the TV (no details). Each fact: [label, true value, glitched value].
    Glitched players get 2 facts swapped and don't know it. */
 glitch: [

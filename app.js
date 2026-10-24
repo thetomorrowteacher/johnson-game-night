@@ -60,7 +60,7 @@ const PACK_ORDER=Object.keys(PACKS);
 const GAMES={
   flaugin:{name:"Flaugin",min:3,local:true,seg:"Flaugers",timer:120,timerLabel:"Two-minute talk timer",
     sub:{local:"Everyone shares one phone and takes turns peeking.",host:"Pick a pack, then open a room. Everyone joins on their own phone."},
-    rules:["Everyone looks at their secret card. The Flauger’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught Flauger gets one guess at the word to steal the round."]},
+    rules:["Flaugin’ is said FLAW-jin, and the player doing it is the Flauger (FLAW-jer). It’s Memphis slang for lying or fronting.","Everyone looks at their secret card. The Flauger’s card has no word.","Go around the table. Everyone says one word that fits the secret.","Talk it over, then vote out the player you think is flaugin’.","A caught Flauger gets one guess at the word to steal the round."]},
   copycat:{name:"Copycat",min:3,local:true,seg:"Copycats",timer:90,timerLabel:"90-second debate timer",
     sub:{local:"Everyone shares one phone and peeks at their mission.",host:"Open a room. Everyone gets their mission on their own phone."},
     rules:["Everyone gets a secret mission. The Copycat’s mission is a little different, and they know it.","The TV shows a debate topic. Talk it out while you secretly complete your mission.","Vote for the player you think had the odd mission.","Catch the Copycat: +2 for every correct vote. Copycat escapes: +4."]},

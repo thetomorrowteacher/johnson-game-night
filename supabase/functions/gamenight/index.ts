@@ -14,7 +14,7 @@ const CORS = {
 };
 const PIN = "ABCDEFGHJKMNPQRSTUVWXYZ";
 // Games whose private cards the TV builds (everything except Flaugin, which the server deals itself).
-const GAMES = ["copycat", "glitch", "agenda", "rules", "taboo", "wave", "mafia", "spades", "uno", "escape"];
+const GAMES = ["copycat", "glitch", "agenda", "rules", "taboo", "wave", "mafia", "spades", "uno", "escape", "floor"];
 const ALL_GAMES = ["flaugin", ...GAMES];
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 const err = (msg: string, status = 400) => json({ error: msg }, status);

@@ -234,15 +234,16 @@ function renderHost(main,side){
     const L=x.last;const flash=x.cells.map((o,i)=>o===L.winner?i:-1).filter(i=>i>=0);
     main.append(el("p",{class:"verdict win",text:n(L.winner)+" wins the duel!"}),
       el("p",{class:"reveal-line",text:n(L.loser)+" is off the block. "+n(L.winner)+" takes "+L.took+(L.took===1?" square":" squares")+" and now owns "+squares(x,L.winner)+"."}),
-      floorGrid(x,n,{phase:"end",flash}),
-      el("div",{class:"row"},neighbors(x,L.winner).length?el("button",{class:"btn-big",text:n(L.winner)+" keeps going",onclick:()=>afterDuel(true)}):null,
+      el("div",{class:"row floor-next"},neighbors(x,L.winner).length?el("button",{class:"btn-big",text:n(L.winner)+" keeps going",onclick:()=>afterDuel(true)}):null,
         el("button",{class:"btn-felt",text:"Back to the randomizer 🎰",onclick:()=>afterDuel(false)})),
       el("p",{class:"sub",text:n(L.winner)+" can choose on their phone too."}));
+    side.append(el("div",{class:"panel"},el("h3",{text:"The block now"}),floorGrid(x,n,{phase:"end",flash})));
     return;
   }
   if(h.phase==="result"){
     main.append(el("p",{class:"verdict win",text:"👑 "+n(x.champ)+" runs the block!"}),
-      el("p",{class:"reveal-line",text:n(x.champ)+" owns "+squares(x,x.champ)+" of "+x.cells.length+" squares after "+x.duels+(x.duels===1?" duel.":" duels.")}),floorGrid(x,n,{phase:"end"}));
+      el("p",{class:"reveal-line",text:n(x.champ)+" owns "+squares(x,x.champ)+" of "+x.cells.length+" squares after "+x.duels+(x.duels===1?" duel.":" duels.")}));
+    side.append(el("div",{class:"panel"},el("h3",{text:"The final block"}),floorGrid(x,n,{phase:"end"})));
     const sb=K.scoreboard();sb.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Every duel won: +1. Running the block: +5."}));main.append(sb);K.resultFooter(main);
   }
 }
@@ -254,11 +255,11 @@ function renderPlayer(v,s){
   clearInterval(phoneTick);
   const mine=x.cells.includes(me);
   if(s.phase==="result"){v.append(el("p",{class:"verdict "+(x.champ===me?"win":"lose"),text:x.champ===me?"👑 You run the block!":rn(x.champ)+" runs the block!"}),floorGrid(x,rn,{me}),K.myScore(s));return}
-  v.append(el("div",{class:"team-pill t-green",style:"background:"+(mine?colorOf(x,me):"#555")},el("span",{text:mine?"Your category: "+CATS[x.cat[me]].name:"You're off the block. Watch!"}),el("b",{text:mine?squares(x,me)+(squares(x,me)===1?" square":" squares"):""})));
+  if(s.phase!=="duel")v.append(el("div",{class:"team-pill t-green",style:"background:"+(mine?colorOf(x,me):"#555")},el("span",{text:mine?"Your category: "+CATS[x.cat[me]].name:"You're off the block. Watch!"}),el("b",{text:mine?squares(x,me)+(squares(x,me)===1?" square":" squares"):""})));
   if(s.phase==="floor"){
     if(x.challenger===me){
       v.append(el("p",{class:"big-msg",text:"You're the challenger!"}),el("p",{class:"sub",text:"Pick a neighbor to battle. You'll play THEIR category."}));
-      const g=el("div",{class:"vote-grid"});x.nbrs.forEach(id=>g.append(el("button",{type:"button",onclick:()=>{K.act("pick",{target:id});K.FX.play("whoosh")}},el("b",{text:rn(id)}),el("small",{text:CATS[x.cat[id]].name}))));
+      const g=el("div",{class:"vote-grid floor-nbrs"});x.nbrs.forEach(id=>g.append(el("button",{type:"button",onclick:()=>{K.act("pick",{target:id});K.FX.play("whoosh")}},el("b",{text:rn(id)}),el("small",{text:CATS[x.cat[id]].name}))));
       v.append(g);K.FX.vibrate([80,50,80]);
     }else{
       v.append(el("p",{class:"big-msg",text:rn(x.challenger)+" is picking…"}));

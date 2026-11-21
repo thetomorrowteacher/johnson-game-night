@@ -50,6 +50,7 @@ Each newer game is a plugin in `games/` that registers on `window.GN_PLUGINS`; `
 - **Spades** (`spades`): 4 players, partners across. Big Joker, Little Joker, then the 2 of spades on top; 2 of clubs and 2 of hearts removed. The TV shows the table, deck and books; hands stay on phones.
 - **Stack** (`uno`): Uno-style. The TV shows the draw and play piles; hands stay on phones. Stack +2s and +4s, play doubles and triples, call last card or get caught.
 - **Run the Block** (`floor`): like the TV show The Floor. Everyone owns a square and a category on the TV; the randomizer picks a challenger who duels a neighbor on chess clocks (multiple choice on phones, pass costs 3 seconds); the winner takes the loser's squares.
+- **Switch Up** (`ladder`): a word ladder race. Go from the START word to the GOAL word (like SHOE → FORK) by changing one letter at a time, and every step has to be a real word. Players race on their phones solo or as Team Red vs Team Green; the TV shows the race and gold match meters, never the words, until the reveal shows everyone's ladder next to the shortest one. 191 checked puzzles of 3, 4 and 5 letters.
 - **Locked In** (`escape`): team escape room against the clock. Every phone gets different secret clues. Rooms: Big Mama's Kitchen, the Memphis Studio, Nassau Treasure.
 
 The server function source lives in `supabase/functions/gamenight/index.ts` (actions: create, join, touch, deal, dealCards, setCards, card, reveal, ratings, rate).

@@ -799,6 +799,59 @@ button.uc{cursor:pointer;transition:transform .12s ease}
   .duel-count{animation:pop .5s cubic-bezier(.3,1.5,.5,1) both}
   .duel-clock.hurry.on{animation:shake .5s ease infinite}
 }
+
+/* ---------- Switch Up (word ladder) ---------- */
+.lad-tiles{display:inline-flex;gap:4px}
+.lad-tiles .lt{width:34px;height:40px;border-radius:8px;background:#fffaee;color:var(--felt);font-family:var(--display);font-size:1.3rem;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.3);padding:0}
+.lad-tiles .lt.hit{background:var(--sky)}
+.lad-tiles.goal .lt{background:var(--lav);color:#fff}
+.lad-tiles.big .lt{width:clamp(44px,12vw,78px);height:clamp(52px,14vw,92px);font-size:clamp(1.8rem,7vw,3.4rem);border-radius:12px;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+.lad-tiles button.lt{cursor:pointer;border:0}
+.lad-tiles .lt.sel{background:var(--berry);color:#fff;transform:translateY(-6px);box-shadow:0 0 0 3px #fffaee,0 8px 14px rgba(0,0,0,.4)}
+.lad-goal{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.lad-goal>div{display:flex;flex-direction:column;gap:6px}
+.lad-goal small{font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--sky)}
+.lad-goal.sm{align-items:center;justify-content:center;gap:8px}
+.lad-goal.sm .lt{width:28px;height:34px;font-size:1.05rem}
+.lad-arrow{font-family:var(--display);font-size:clamp(1.6rem,5vw,3rem);color:var(--sky);padding-bottom:10px}
+.lad-goal.sm .lad-arrow{font-size:1.3rem;padding:0}
+.lad-rungs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.lad-rungs li{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.22);border-left:4px solid rgba(246,194,28,.5)}
+.lad-rungs li small{width:3.6em;font-weight:800;font-size:.7rem;letter-spacing:.08em;color:var(--sky)}
+.lad-rungs li.goal{border-left-color:var(--lav);background:rgba(47,154,43,.25)}
+.lad-rungs.small .lt{width:26px;height:30px;font-size:.95rem}
+.lad-keys{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.lad-keys button{padding:10px 0;font-family:var(--display);font-size:1.15rem;min-height:44px}
+.lad-keys button.same{opacity:.3}
+.lad-hints{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-radius:14px;background:rgba(246,194,28,.15);box-shadow:inset 0 0 0 2px rgba(246,194,28,.4)}
+.lad-hints small{font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--sky)}
+.lad-race{display:flex;flex-direction:column;gap:8px}
+.lad-lane{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--soft);color:var(--ink)}
+.lad-lane b{font-size:1.05rem}
+.lad-lane .lad-steps{font-weight:800;color:var(--muted)}
+.lad-lane .lad-done{font-weight:800;color:var(--win)}
+.lad-lane.done{box-shadow:inset 0 0 0 3px var(--lav)}
+.lad-lane.t-red,.lad-lane.t-green{color:#fffaee}.lad-lane.t-red .lad-steps,.lad-lane.t-green .lad-steps,.lad-lane.t-red .lad-done,.lad-lane.t-green .lad-done{color:#fffaee}
+.lad-meter{grid-column:1/-1;display:flex;gap:4px}
+.lad-meter i{flex:1;height:10px;border-radius:999px;background:rgba(0,0,0,.15)}
+.lad-meter i.on{background:var(--sky);box-shadow:0 0 8px rgba(246,194,28,.6)}
+.lad-chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lad-chain span{font-family:var(--display);padding:4px 10px;border-radius:8px;background:var(--soft);color:var(--felt)}
+.lad-chain span:not(:last-child)::after{content:" →";color:var(--muted)}
+.lad-chain span.goal{background:var(--lav);color:#fff}
+.lad-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;max-height:60vh;overflow:auto}
+.lad-cols .lad-rungs li{gap:6px;padding:4px 6px}
+.lad-cols .lad-rungs li small{width:auto;min-width:1.4em}
+.lad-cols .lad-rungs .lt{width:24px;height:28px;font-size:.9rem;border-radius:6px}
+.lad-col{display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:12px;background:var(--felt)}
+.lad-col>b{color:#fffaee}
+.lad-col.t-red{background:var(--berry)}.lad-col.t-green{background:var(--lav)}
+@media (prefers-reduced-motion:no-preference){
+  .lad-rungs li:last-child{animation:cardIn .35s cubic-bezier(.2,1.3,.4,1) both}
+  .lad-tiles.big .lt{transition:transform .15s ease,background .2s ease}
+  .lad-meter i.on{transition:background .3s ease}
+  .lad-lane.done{animation:pop .5s ease both}
+}
 </style>
 </head>
 <body>
@@ -968,6 +1021,17 @@ button.uc{cursor:pointer;transition:transform .12s ease}
           <h3 class="game-name">Run the <span>Block</span></h3>
           <p class="game-desc">Everybody owns a square and a category. The randomizer picks a challenger to battle a neighbor in rapid-fire picture and trivia rounds on chess clocks. The winner takes the loser's squares. Last one standing runs the block. 3 to 30 players.</p>
           <div class="row"><button data-host="floor">Host on the TV</button></div>
+        </div>
+      </article>
+      <article class="game-tile" data-game="ladder">
+        <div class="game-art parallax" data-parallax aria-hidden="true">
+          <img class="parallax-img" src="art-ladder.svg" alt="" width="1200" height="700" decoding="async">
+          <span class="art-tag">One letter at a time</span>
+        </div>
+        <div class="game-body">
+          <h3 class="game-name">Switch <span>Up</span></h3>
+          <p class="game-desc">Get from SHOE to FORK by changing one letter at a time, and every step has to be a real word. Race on your phones (or in two teams) while the TV shows how close everyone is. 2 to 30 players.</p>
+          <div class="row"><button data-host="ladder">Host on the TV</button></div>
         </div>
       </article>
     </div>
@@ -1142,16 +1206,18 @@ button.uc{cursor:pointer;transition:transform .12s ease}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="bg.js?v=202611211012"></script>
-<script src="fx.js?v=202611211012"></script>
-<script src="content.js?v=202611211012"></script>
-<script src="games/taboo.js?v=202611211012"></script>
-<script src="games/wave.js?v=202611211012"></script>
-<script src="games/mafia.js?v=202611211012"></script>
-<script src="games/spades.js?v=202611211012"></script>
-<script src="games/stack.js?v=202611211012"></script>
-<script src="games/locked.js?v=202611211012"></script>
-<script src="games/floor.js?v=202611211012"></script>
-<script src="app.js?v=202611211012"></script>
+<script src="bg.js?v=202611211028"></script>
+<script src="fx.js?v=202611211028"></script>
+<script src="content.js?v=202611211028"></script>
+<script src="games/taboo.js?v=202611211028"></script>
+<script src="games/wave.js?v=202611211028"></script>
+<script src="games/mafia.js?v=202611211028"></script>
+<script src="games/spades.js?v=202611211028"></script>
+<script src="games/stack.js?v=202611211028"></script>
+<script src="games/locked.js?v=202611211028"></script>
+<script src="games/floor.js?v=202611211028"></script>
+<script src="games/ladder-words.js?v=202611211028"></script>
+<script src="games/ladder.js?v=202611211028"></script>
+<script src="app.js?v=202611211028"></script>
 </body>
 </html>

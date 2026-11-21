@@ -1,4 +1,4 @@
-/* Switch Up (working name; id "ladder"): word ladder race.
+/* Switch It (id "ladder"): word ladder race.
    Go from the START word to the GOAL word by changing one letter at a time. Every step has to be a real word.
    SHOE → SHOP → SHIP → CHIP → CHIN → COIN → CORN → WORN → WORK → FORK.
    Everyone races on their phone (or Team Red vs. Team Green share one ladder). The TV shows the start, the goal,
@@ -145,7 +145,7 @@ function renderHost(main,side){
   const h=K.H,x=X(),el=K.el;if(!x)return;const p=pub();
   if(h.phase==="climb"){
     const now=Date.now();const counting=now<x.startsAt;
-    main.append(el("p",{class:"eyebrow",text:"Switch Up · ladder "+(x.idx+1)+" of "+x.puzzles.length+" · change one letter at a time"}),
+    main.append(el("p",{class:"eyebrow",text:"Switch It · ladder "+(x.idx+1)+" of "+x.puzzles.length+" · change one letter at a time"}),
       el("div",{class:"lad-goal"},el("div",null,el("small",{text:"Start"}),tiles(x.start,x.goal,{big:true})),el("span",{class:"lad-arrow",text:"→"}),el("div",null,el("small",{text:"Goal"}),tiles(x.goal,null,{big:true,cls:"goal"}))));
     if(counting){main.append(el("div",{class:"duel-count",text:String(Math.ceil((x.startsAt-now)/1000))}));setTimeout(()=>{if(K.H&&K.H.phase==="climb")K.renderHost()},Math.min(1000,x.startsAt-now+20));}
     else main.append(el("div",{class:"timer",id:"ladTimer",text:K.fmt(Math.max(0,(x.endsAt-now)/1000))}));
@@ -177,7 +177,7 @@ function renderHost(main,side){
   }
   if(h.phase==="result"){
     const names=(x.champs||[]).map(u=>x.units[u].name);
-    main.append(el("p",{class:"verdict win",text:names.length?"🏆 "+names.join(" & ")+(names.length>1?" tie!":" wins Switch Up!"):"Good climbing, everybody!"}));
+    main.append(el("p",{class:"verdict win",text:names.length?"🏆 "+names.join(" & ")+(names.length>1?" tie!":" wins Switch It!"):"Good climbing, everybody!"}));
     const ul=el("ul",{class:"turn-log"});Object.entries(x.score).sort((a,b)=>b[1]-a[1]).forEach(([u,s])=>ul.append(el("li",{class:"k-got"},el("span",{text:x.units[u].name}),el("b",{text:s+" pts"}))));
     main.append(el("div",{class:"panel"},el("h3",{text:"Ladder points"}),ul));
     const sb=K.scoreboard();sb.append(el("p",{class:"sub",style:"font-size:.82rem",text:"Each ladder: 1st to finish +3, 2nd +2, everyone else who finishes +1, fewest steps +1. Game winner +2."}));main.append(sb);K.resultFooter(main);
@@ -190,7 +190,7 @@ function tvNow(x){if(!x||!x.snap)return Date.now();if(!(x.snap in snapSeen))snap
 function renderPlayer(v,s){
   const x=s.ext,el=K.el,P=K.P;if(!x)return;const me=P.pid;
   const uid=Object.keys(x.units).find(k=>x.units[k].members.includes(me));const u=uid&&x.units[uid];
-  if(s.phase==="result"){const won=(x.champs||[]).includes(uid);v.append(el("p",{class:"verdict "+(won?"win":"lose"),text:won?"🏆 You win Switch Up!":"Good climbing!"}),K.myScore(s));return}
+  if(s.phase==="result"){const won=(x.champs||[]).includes(uid);v.append(el("p",{class:"verdict "+(won?"win":"lose"),text:won?"🏆 You win Switch It!":"Good climbing!"}),K.myScore(s));return}
   if(!u){v.append(el("p",{class:"sub",text:"You're watching this one."}));return}
   if(x.teams)v.append(el("div",{class:"team-pill "+u.cls},el("span",{text:"You're on "+u.name}),el("b",{text:"Climb together!"})));
   v.append(el("div",{class:"lad-goal sm"},tiles(x.start,x.goal),el("span",{class:"lad-arrow",text:"→"}),tiles(x.goal,null,{cls:"goal"})));
@@ -233,7 +233,7 @@ function renderPlayer(v,s){
 
 window.GN_PLUGINS=window.GN_PLUGINS||{};
 window.GN_PLUGINS[ID]={
-  config:{name:"Switch Up",min:2,local:false,seg:null,timer:0,timerLabel:"",
+  config:{name:"Switch It",min:2,local:false,seg:null,timer:0,timerLabel:"",
     sub:{host:"Open a room. Everyone climbs the ladder on their own phone."},
     rules:["Get from the START word to the GOAL word by changing ONE letter at a time.","Every step has to be a real word: SHOE → SHOP → SHIP → CHIP … → FORK.","On your phone, tap a letter, then tap the new letter. Undo if you get stuck.","The TV shows how close everyone is (gold = letters that already match the goal), but never your words. Hints are on the TV.","Each ladder: 1st to finish +3, 2nd +2, everyone else who finishes +1, and the fewest steps gets +1 more."]},
   defaults:{len:4,count:3,time:180,mode:"solo"},
@@ -243,8 +243,8 @@ window.GN_PLUGINS[ID]={
   scene(phase){
     const x=K&&K.H?pub():(K&&K.P&&K.P.state&&K.P.state.ext);if(!x)return null;
     if(phase==="climb")return [UP(x.start)+" → "+UP(x.goal),"Ladder "+(x.idx+1)+" of "+x.count];
-    if(phase==="reveal")return ["Time to compare","Switch Up"];
-    if(phase==="result")return ["🏆 Final","Switch Up"];
+    if(phase==="reveal")return ["Time to compare","Switch It"];
+    if(phase==="result")return ["🏆 Final","Switch It"];
     return null;
   },
   music(ph){return ph==="climb"?["lobby",0.14]:ph==="reveal"||ph==="result"?["party",0.3]:["deal",0.25]}
